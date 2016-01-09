@@ -1,0 +1,24 @@
+<robot name="test_robot">
+  <link name="base_link" />
+  <link name="cam1_link" />
+  <link name="cam2_link" />
+  <link name="cam3_link" />
+
+  <joint name="cam1_joint" type="fixed">
+    <origin xyz="0.081 0 0" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="cam1_link"/>
+  </joint>
+
+  <joint name="cam2_joint" type="fixed">
+    <origin xyz="0.070148 0.0405 0" rpy="0 0 1.0472"/>
+    <parent link="base_link"/>
+    <child link="cam2_link"/>
+  </joint>
+
+  <joint name="cam3_joint" type="fixed">
+    <origin xyz="0.0405 0.070148 0" rpy="0 0 2.0944"/>
+    <parent link="base_link" />
+    <child link="cam3_link" />
+  </joint>
+</robot>
