@@ -23,8 +23,8 @@ tf::TransformListener *tf_listener;
 
 void pcl_combine ()
 {
-  pcl::fromROSMsg(output1, output1_pcl);
-  pcl::fromROSMsg(output2, output2_pcl);
+  cam1_data_valid = false;
+  cam2_data_valid = false;
 
   output_pcl = output1_pcl;
   output_pcl += output2_pcl;
@@ -45,14 +45,11 @@ void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
   // Do data processing here...
   pcl_ros::transformPointCloud("pf1_link", *input, output1, *tf_listener);
   //pcl_conversions::toPCL(ros_cam1, pcl_cam1);
-
+  pcl::fromROSMsg(output1, output1_pcl);
   // Publish the data.
   //pub.publish (output);
   if (cam1_data_valid && cam2_data_valid)
   {
-    cam1_data_valid = false;
-    cam2_data_valid = false;
-    
     pcl_combine();
   }
 }
@@ -68,14 +65,11 @@ void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
   // Do data processing here...
   pcl_ros::transformPointCloud("pf2_link", *input, output2, *tf_listener);
   //pcl_conversions::toPCL(ros_cam2, pcl_cam2);
-
+  pcl::fromROSMsg(output2, output2_pcl);
   // Publish the data.
   //pub.publish (output);
   if (cam1_data_valid && cam2_data_valid)
   {
-    cam1_data_valid = false;
-    cam2_data_valid = false;
-    
     pcl_combine();
   }
 }
