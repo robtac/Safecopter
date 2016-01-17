@@ -15,15 +15,21 @@ ros::Publisher pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 
+sensor_msgs::PointCloud2 output, output1, output2;
+pcl::PointCloud<pcl::PointXYZ> output_pcl, output1_pcl, output2_pcl;
+
 pcl::PCLPointCloud2 pcl_cam1, pcl_cam2, pcl_combined;
-tf::TransformListener* tf_listener = NULL;
+tf::TransformListener *tf_listener;
 
 void pcl_combine ()
 {
-  pcl::concatenatePointCloud (pcl_cam1, pcl_cam2, pcl_combined);
-    
-  sensor_msgs::PointCloud2 output;
-  pcl_conversions::moveFromPCL(pcl_combined, output);
+  pcl::fromROSMsg(output1, output1_pcl);
+  pcl::fromROSMsg(output2, output2_pcl);
+
+  output_pcl = output1_pcl;
+  output_pcl += output2_pcl;
+
+  pcl::toROSMsg(output_pcl, output);
   
   pub.publish(output);
 }
@@ -32,12 +38,13 @@ void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   cam1_data_valid = true;
   
+  tf_listener->waitForTransform("/base_link", (*input).header.frame_id, (*input).header.stamp, ros::Duration(5.0));
   // Create a container for the data.
-  sensor_msgs::PointCloud2 ros_cam1;
+  //sensor_msgs::PointCloud2 ros_cam1;
 
   // Do data processing here...
-  pcl_ros::transformPointCloud("pf1_link", *input, ros_cam1, *tf_listener);
-  pcl_conversions::toPCL(ros_cam1, pcl_cam1);
+  pcl_ros::transformPointCloud("pf1_link", *input, output1, *tf_listener);
+  //pcl_conversions::toPCL(ros_cam1, pcl_cam1);
 
   // Publish the data.
   //pub.publish (output);
@@ -54,12 +61,13 @@ void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   cam2_data_valid = true;
   
+  tf_listener->waitForTransform("/base_link", (*input).header.frame_id, (*input).header.stamp, ros::Duration(5.0));
   // Create a container for the data.
-  sensor_msgs::PointCloud2 ros_cam2;
+  //sensor_msgs::PointCloud2 ros_cam2;
 
   // Do data processing here...
-  pcl_ros::transformPointCloud("pf2_link", *input, ros_cam2, *tf_listener);
-  pcl_conversions::toPCL(ros_cam2, pcl_cam2);
+  pcl_ros::transformPointCloud("pf2_link", *input, output2, *tf_listener);
+  //pcl_conversions::toPCL(ros_cam2, pcl_cam2);
 
   // Publish the data.
   //pub.publish (output);
@@ -77,6 +85,8 @@ int main (int argc, char** argv)
   // Initialize ROS
   ros::init (argc, argv, "pc_combine");
   ros::NodeHandle nh;
+
+  tf_listener = new tf::TransformListener();
 
   // Create a ROS subscriber for the input point cloud
   ros::Subscriber sub = nh.subscribe ("/pf1/points", 1, cloud_cb_cam1);
