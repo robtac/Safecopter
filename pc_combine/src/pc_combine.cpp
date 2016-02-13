@@ -11,6 +11,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <math.h>
+
 using namespace std;
 
 ros::Publisher pub;
@@ -19,12 +21,39 @@ bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
-pcl::PointCloud<pcl::PointXYZ> output_pcl, output1_pcl, output2_pcl, output3_pcl;
+pcl::PointCloud<pcl::PointXYZRGB> output_pcl, output1_pcl, output2_pcl, output3_pcl;
 
 string base_link_id = "base_link";
 
 pcl::PCLPointCloud2 pcl_cam1, pcl_cam2, pcl_combined;
 tf::TransformListener *tf_listener;
+
+pcl::PointCloud<pcl::PointXYZRGB> colorize (pcl::PointCloud<pcl::PointXYZRGB> cloud)
+{
+  for (int i = 0; i < cloud.size(); i++)
+  {
+    pcl::PointXYZRGB point = cloud.at(i);
+    double distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
+    //std::cout << "d= " << distance << std::endl;
+    if (distance > 0 || distance < 0 || distance == 0) {
+      if (distance < 1.0)
+      {
+	point.r = 255;
+      }
+      else if (distance < 2.0)
+      {
+	point.g = 255;
+      }
+      else
+      {
+	point.b = 255;
+      }
+    }
+    
+    cloud.at(i) = point;
+  }
+  return cloud;
+}
 
 void pcl_combine ()
 {
@@ -38,13 +67,16 @@ void pcl_combine ()
   output_pcl += output2_pcl;
   output_pcl += output3_pcl;
 
+  output_pcl = colorize(output_pcl);
+
   pcl::toROSMsg(output_pcl, output);
-  
+
   pub.publish(output);
 }
 
 void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
+  std::cout << "Callback for cam 1" << std::endl;
   cam1_data_valid = true;
   
   pcl::fromROSMsg(*input, input1_pcl);
@@ -57,7 +89,9 @@ void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
   {
 	  ROS_ERROR("%s", ex.what());
   }
-  pcl_ros::transformPointCloud (input1_pcl, output1_pcl, transform);
+
+  copyPointCloud(input1_pcl, output1_pcl);
+  pcl_ros::transformPointCloud (output1_pcl, output1_pcl, transform);
   output1_pcl.header.frame_id=base_link_id;
 
   if (cam1_data_valid && cam2_data_valid && cam3_data_valid)
@@ -68,8 +102,8 @@ void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
 
 void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
+  std::cout << "Callback for cam 2" << std::endl;
   cam2_data_valid = true;
-  base_link_id = "base_link";
 
   pcl::fromROSMsg(*input, input2_pcl);
   tf::StampedTransform transform;
@@ -81,7 +115,9 @@ void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
   {
 	  ROS_ERROR("%s", ex.what());
   }
-  pcl_ros::transformPointCloud (input2_pcl, output2_pcl, transform);
+
+  copyPointCloud(input2_pcl, output2_pcl);
+  pcl_ros::transformPointCloud (output2_pcl, output2_pcl, transform);
   output2_pcl.header.frame_id=base_link_id;
 
   if (cam1_data_valid && cam2_data_valid && cam3_data_valid)
@@ -92,8 +128,8 @@ void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
 
 void cloud_cb_cam3 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
+  std::cout << "Callback for cam 3" << std::endl;
   cam3_data_valid = true;
-  base_link_id = "base_link";
 
   pcl::fromROSMsg(*input, input3_pcl);
   tf::StampedTransform transform;
@@ -105,7 +141,9 @@ void cloud_cb_cam3 (const sensor_msgs::PointCloud2ConstPtr& input)
   {
 	  ROS_ERROR("%s", ex.what());
   }
-  pcl_ros::transformPointCloud (input3_pcl, output3_pcl, transform);
+
+  copyPointCloud(input3_pcl, output3_pcl);
+  pcl_ros::transformPointCloud (output3_pcl, output3_pcl, transform);
   output3_pcl.header.frame_id=base_link_id;
 
   if (cam1_data_valid && cam2_data_valid && cam3_data_valid)
