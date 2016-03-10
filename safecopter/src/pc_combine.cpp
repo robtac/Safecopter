@@ -31,13 +31,16 @@ ros::Time oldTime;
 
 pcl::PointCloud<pcl::PointXYZRGB> colorize (pcl::PointCloud<pcl::PointXYZRGB> cloud)
 {
+  float quadWidth = 0.8;
+  float quadHeight = 0.4;
+  
   for (int i = 0; i < cloud.size(); i++)
   {
     pcl::PointXYZRGB point = cloud.at(i);
     double distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
     //std::cout << "d= " << distance << std::endl;
     if (distance > 0 || distance < 0 || distance == 0) {
-      if (point.x < 0.35 && point.x > -.035 && distance < 2 && point.z < 0.5 && point.z > -0.5)
+      if (point.x < quadWidth / 2 && point.x > -quadWidth / 2 && distance < 2 && point.z < quadHeight / 2 && point.z > -quadHeight / 2)
       {
 	point.r = 255;
 	point.g = 255;
