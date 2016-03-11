@@ -18,8 +18,8 @@ int main(int argc, char** argv) {
     // message declarations
     geometry_msgs::TransformStamped odom_trans;
     sensor_msgs::JointState joint_state;
-    odom_trans.header.frame_id = "odom";
-    odom_trans.child_frame_id = "axis";
+    odom_trans.header.frame_id = "base_link";
+    odom_trans.child_frame_id = "base_link2";
 
     while (ros::ok()) {
         //update joint_state

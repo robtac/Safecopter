@@ -1,21 +1,25 @@
 <launch>
  
  <param name="robot_description" command="cat $(find safecopter)/urdf/safecopter.urdf" />
+ 
  <node pkg="tf" type="static_transform_publisher" name="base_link"  machine="localhost"
   args="0 0 0 0 0 0 base_link base_link2 100" />
  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
- <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+ <!--
+ <node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher" />
+ <node name="state_publisher" pkg="safecopter" type="state_publisher" />
+ -->
 
  <node pkg="tf" type="static_transform_publisher" name="cam1"  machine="localhost"
-  args="0 0 0 0 0 0 cam1_link pf1_link 100" />
+  args="0 0 0 0 0 3.1428 cam1_link pf1_link 100" />
  <node pkg="tf" type="static_transform_publisher" name="cam2"  machine="localhost"
-  args="0 0 0 0 0 0 cam2_link pf2_link 100" />
+  args="0 0 0 0 0 3.1428 cam2_link pf2_link 100" />
  <node pkg="tf" type="static_transform_publisher" name="cam3"  machine="localhost"
-  args="0 0 0 2.0944 0 0 cam3_link pf3_link 100" />
+  args="0 0 0 0 0 3.1428 cam3_link pf3_link 100" />
 
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
   <arg name="base_name" value="pf1" />
-  <arg name="sensor" value="0005-1203-0034-2215" />
+  <arg name="sensor" value="0005-1203-0034-1806" />
   <arg name="publish_tf" value="true" />
  </include>
 
@@ -27,7 +31,7 @@
  
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
   <arg name="base_name" value="pf3" />
-  <arg name="sensor" value="0005-1203-0034-1806" />
+  <arg name="sensor" value="0005-1203-0034-2215" />
   <arg name="publish_tf" value="true" />
  </include>
 </launch>

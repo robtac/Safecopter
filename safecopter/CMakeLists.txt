@@ -9,7 +9,11 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  pcl_ros
+  pcl_conversions
 )
+
+find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -129,16 +133,25 @@ include_directories(
 # add_dependencies(safecopter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(safecopter_node src/safecopter_node.cpp)
+add_executable(pc_combine src/pc_combine.cpp)
+add_executable(markers src/markers.cpp)
+add_executable(state_publisher src/state_publisher.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(safecopter_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(safecopter_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(pc_combine
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(state_publisher ${catkin_LIBRARIES})
+target_link_libraries(markers ${catkin_LIBRARIES})
+
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 #############
 ## Install ##

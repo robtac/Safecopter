@@ -27,16 +27,26 @@ string base_link_id = "base_link";
 
 pcl::PCLPointCloud2 pcl_cam1, pcl_cam2, pcl_combined;
 tf::TransformListener *tf_listener;
+ros::Time oldTime;
 
 pcl::PointCloud<pcl::PointXYZRGB> colorize (pcl::PointCloud<pcl::PointXYZRGB> cloud)
 {
+  float quadWidth = 0.8;
+  float quadHeight = 0.4;
+  
   for (int i = 0; i < cloud.size(); i++)
   {
     pcl::PointXYZRGB point = cloud.at(i);
     double distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
     //std::cout << "d= " << distance << std::endl;
     if (distance > 0 || distance < 0 || distance == 0) {
-      if (distance < 1.0)
+      if (point.x < quadWidth / 2 && point.x > -quadWidth / 2 && distance < 2 && point.z < quadHeight / 2 && point.z > -quadHeight / 2)
+      {
+	point.r = 255;
+	point.g = 255;
+	point.b = 255;
+      }
+      else if (distance < 1.0)
       {
 	point.r = 255;
       }
@@ -57,6 +67,8 @@ pcl::PointCloud<pcl::PointXYZRGB> colorize (pcl::PointCloud<pcl::PointXYZRGB> cl
 
 void pcl_combine ()
 {
+  ros::Time newTime;
+  
   cam1_data_valid = false;
   cam2_data_valid = false;
   cam3_data_valid = false;
@@ -72,11 +84,15 @@ void pcl_combine ()
   pcl::toROSMsg(output_pcl, output);
 
   pub.publish(output);
+  
+  newTime = ros::Time::now();
+  std::cout << "Time since last point clould published: " << (newTime - oldTime) << std::endl;
+  oldTime = newTime;
 }
 
 void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
-  std::cout << "Callback for cam 1" << std::endl;
+  std::cout << "Cam 1; ";
   cam1_data_valid = true;
   
   pcl::fromROSMsg(*input, input1_pcl);
@@ -102,7 +118,7 @@ void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
 
 void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
-  std::cout << "Callback for cam 2" << std::endl;
+  std::cout << "Cam 2; ";
   cam2_data_valid = true;
 
   pcl::fromROSMsg(*input, input2_pcl);
@@ -128,7 +144,7 @@ void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
 
 void cloud_cb_cam3 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
-  std::cout << "Callback for cam 3" << std::endl;
+  std::cout << "Cam 3; ";
   cam3_data_valid = true;
 
   pcl::fromROSMsg(*input, input3_pcl);
