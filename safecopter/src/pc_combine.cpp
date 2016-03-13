@@ -11,11 +11,15 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <visualization_msgs/Marker.h>
+
 #include <math.h>
+
+#include "pc_combine.h"
 
 using namespace std;
 
-ros::Publisher pub;
+ros::Publisher pub, pub2;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -29,14 +33,54 @@ pcl::PCLPointCloud2 pcl_cam1, pcl_cam2, pcl_combined;
 tf::TransformListener *tf_listener;
 ros::Time oldTime;
 
-pcl::PointCloud<pcl::PointXYZRGB> colorize (pcl::PointCloud<pcl::PointXYZRGB> cloud)
+bool detect_collision (float degree_theta)
 {
   float quadWidth = 0.8;
   float quadHeight = 0.4;
+  bool willCollide = false;
+  Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
+  float theta = (M_PI / 180) * degree_theta;
   
-  for (int i = 0; i < cloud.size(); i++)
+  pcl::PointXYZRGB point;
+  
+  transform_2.rotate (Eigen::AngleAxisf (theta, Eigen::Vector3f::UnitZ()));
+  
+  for (int i = 0; i < output_pcl.size(); i++)
   {
-    pcl::PointXYZRGB point = cloud.at(i);
+    pcl::PointXYZRGB originalPoint = output_pcl.at(i);
+    double distance = sqrt((originalPoint.x * originalPoint.x) + (originalPoint.y * originalPoint.y) + (originalPoint.z * originalPoint.z));
+    //std::cout << "d= " << distance << std::endl;
+    if (distance > 0 || distance < 0 || distance == 0) { // Null test
+      point = pcl::transformPoint (originalPoint, transform_2);
+      //std::cout << "OriginalPoint: " << originalPoint.x << " " << originalPoint.y << " " << originalPoint.z << " New Point: " << point.x << " " << point.y << " " << point.z << std::endl;
+      
+      if (point.x < quadWidth / 2 && point.x > -quadWidth / 2 && distance < 2 && point.z < quadHeight / 2 && point.z > -quadHeight / 2)
+      {
+	willCollide = true;
+	break;
+      }
+      output_pcl.at(i) = point;
+    }
+  }
+  return willCollide;
+}
+
+void avoid_collision () 
+{
+  bool willCollide = detect_collision(30);
+  
+  std::cout << "detect_collision: " << willCollide << std::endl;
+}
+
+void colorize ()
+{
+  float quadWidth = 0.8;
+  float quadHeight = 0.4;
+  bool willCollide = false;
+  
+  for (int i = 0; i < output_pcl.size(); i++)
+  {
+    pcl::PointXYZRGB point = output_pcl.at(i);
     double distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
     //std::cout << "d= " << distance << std::endl;
     if (distance > 0 || distance < 0 || distance == 0) {
@@ -45,6 +89,8 @@ pcl::PointCloud<pcl::PointXYZRGB> colorize (pcl::PointCloud<pcl::PointXYZRGB> cl
 	point.r = 255;
 	point.g = 255;
 	point.b = 255;
+	
+	willCollide = true;
       }
       else if (distance < 1.0)
       {
@@ -60,9 +106,17 @@ pcl::PointCloud<pcl::PointXYZRGB> colorize (pcl::PointCloud<pcl::PointXYZRGB> cl
       }
     }
     
-    cloud.at(i) = point;
+    output_pcl.at(i) = point;
   }
-  return cloud;
+  
+  if (willCollide) 
+  {
+    avoid_collision();
+  }
+  else
+  {
+    std::cout << "Nothing to avoid" << std::endl;
+  }
 }
 
 void pcl_combine ()
@@ -79,7 +133,7 @@ void pcl_combine ()
   output_pcl += output2_pcl;
   output_pcl += output3_pcl;
 
-  output_pcl = colorize(output_pcl);
+  colorize();
 
   pcl::toROSMsg(output_pcl, output);
 
@@ -183,6 +237,7 @@ int main (int argc, char** argv)
   
   // Create a ROS publisher for the output point cloud
   pub = nh.advertise<sensor_msgs::PointCloud2> ("output", 1);
+  //ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("", 1);
 
   // Spin
   ros::spin ();
