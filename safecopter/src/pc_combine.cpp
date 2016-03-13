@@ -58,7 +58,7 @@ void draw_new_direction (float rotation, float distance, bool willCollide)
   marker.pose.position.z = 0;
   marker.pose.orientation.x = 0.0;
   marker.pose.orientation.y = 0.0;
-  marker.pose.orientation.z = rotation;
+  marker.pose.orientation.z = sin((rotation * M_PI / 180) / 2);
   marker.pose.orientation.w = 1.0;
 
   // Set the scale of the marker -- 1x1x1 here means 1m on a side
@@ -128,12 +128,12 @@ void avoid_collision ()
   if (willCollide)
   {
     std::cout << "Collision detected" << std::endl;
-    draw_new_direction(-0.3333333, 0.5, true);
+    draw_new_direction(-30, 0.5, true);
   }
   else
   {
     std::cout << "No collision" << std::endl;
-    draw_new_direction(-0.333333, 4.0, false);
+    draw_new_direction(-30, 4.0, false);
   }
   
   
