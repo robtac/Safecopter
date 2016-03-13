@@ -105,9 +105,9 @@ void drawDirection (float x, float y, float z, int id, ros::Publisher marker_pub
   marker.pose.position.x = x;
   marker.pose.position.y = y;
   marker.pose.position.z = z;
-  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.x = 1.0;
   marker.pose.orientation.y = 0.0;
-  marker.pose.orientation.z = 1.0;
+  marker.pose.orientation.z = 0.0;
   marker.pose.orientation.w = 1.0;
 
   // Set the scale of the marker -- 1x1x1 here means 1m on a side
@@ -200,10 +200,10 @@ int main( int argc, char** argv )
     drawCircle(1.0, 1, 0, 0, marker_pub);
     drawCircle(2.0, 0, 1, 0, marker_pub2);
     
-    drawDirection(quadWidth / 2, 0, quadHeight / 2, 11, marker_pub_direction);
-    drawDirection(-quadWidth / 2, 0, quadHeight / 2, 12, marker_pub_direction);
-    drawDirection(quadWidth / 2, 0, -quadHeight / 2, 13, marker_pub_direction);
-    drawDirection(-quadWidth / 2, 0, -quadHeight / 2, 14, marker_pub_direction);
+    drawDirection(0, quadWidth / 2, quadHeight / 2, 11, marker_pub_direction);
+    drawDirection(0, -quadWidth / 2, quadHeight / 2, 12, marker_pub_direction);
+    drawDirection(0, quadWidth / 2, -quadHeight / 2, 13, marker_pub_direction);
+    drawDirection(0, -quadWidth / 2, -quadHeight / 2, 14, marker_pub_direction);
     
     marker_pub_target.publish(targetMarker);
     marker_pub_actual.publish(actualMarker);

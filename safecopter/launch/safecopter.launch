@@ -11,11 +11,11 @@
  -->
 
  <node pkg="tf" type="static_transform_publisher" name="cam1"  machine="localhost"
-  args="0 0 0 0 0 3.1428 cam1_link pf1_link 100" />
+  args="0 0 0 -1.5707 0 3.1428 cam1_link pf1_link 100" />
  <node pkg="tf" type="static_transform_publisher" name="cam2"  machine="localhost"
-  args="0 0 0 0 0 3.1428 cam2_link pf2_link 100" />
+  args="0 0 0 -1.5707 0 3.1428 cam2_link pf2_link 100" />
  <node pkg="tf" type="static_transform_publisher" name="cam3"  machine="localhost"
-  args="0 0 0 0 0 3.1428 cam3_link pf3_link 100" />
+  args="0 0 0 -1.5707 0 3.1428 cam3_link pf3_link 100" />
 
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
   <arg name="base_name" value="pf1" />
