@@ -24,9 +24,11 @@ bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
+float min_distance = 0.5;
+float collision_distance = 1.5;
+
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
 pcl::PointCloud<pcl::PointXYZRGB> output_pcl, output1_pcl, output2_pcl, output3_pcl;
-float collision_distance = 1;
 
 string base_link_id = "base_link";
 
@@ -63,8 +65,8 @@ void draw_new_direction (float rotation, float distance, bool willCollide)
 
   // Set the scale of the marker -- 1x1x1 here means 1m on a side
   marker.scale.x = distance;
-  marker.scale.y = 0.01;
-  marker.scale.z = 0.01;
+  marker.scale.y = 0.1;
+  marker.scale.z = 0.1;
 
   // Set the color -- be sure to set alpha to something non-zero!
   if (willCollide)
@@ -106,7 +108,7 @@ bool detect_collision (float degree_theta)
       point = pcl::transformPoint (originalPoint, transform_2);
       //std::cout << "OriginalPoint: " << originalPoint.x << " " << originalPoint.y << " " << originalPoint.z << " New Point: " << point.x << " " << point.y << " " << point.z << std::endl;
       
-      if (point.y < quadWidth / 2 && point.y > -quadWidth / 2 && distance < collision_distance && point.z < quadHeight / 2 && point.z > -quadHeight / 2)
+      if (point.y < quadWidth / 2 && point.y > -quadWidth / 2 && distance < collision_distance && point.z < quadHeight / 2 && point.z > -quadHeight / 2 && distance > min_distance)
       {
 	collidingPoints = collidingPoints + 1;
 	//std::cout << "Colliding points: " << collidingPoints << " ";
@@ -124,19 +126,43 @@ bool detect_collision (float degree_theta)
 
 void avoid_collision () 
 {
-  bool willCollide = detect_collision(30);
+  int max_collision_angle = 90;
+  int value_to_add = 5;
+  int i = value_to_add;
+  bool willCollide = true;
+  for (int degree = 5; degree <= max_collision_angle; degree = degree + i)
+  {
+    if (detect_collision(degree))
+    {
+      std::cout << "Collision detected" << std::endl;
+      //draw_new_direction(-degree, 0.5, true);
+    }
+    else
+    {
+      std::cout << "No collision" << std::endl;
+      draw_new_direction(-degree, 4.0, false);
+      willCollide = false;
+      break;
+    }
+    
+    if (detect_collision(-degree))
+    {
+      std::cout << "Collision detected" << std::endl;
+      //draw_new_direction(-degree, 0.5, true);
+    }
+    else
+    {
+      std::cout << "No collision" << std::endl;
+      draw_new_direction(degree, 4.0, false);
+      willCollide = false;
+      break;
+    }
+  }
+  
   if (willCollide)
   {
-    std::cout << "Collision detected" << std::endl;
-    draw_new_direction(-30, 0.5, true);
+    draw_new_direction(0, 0.5, true);
   }
-  else
-  {
-    std::cout << "No collision" << std::endl;
-    draw_new_direction(-30, 4.0, false);
-  }
-  
-  
 }
 
 void colorize ()
@@ -152,7 +178,7 @@ void colorize ()
     double distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
     //std::cout << "d= " << distance << std::endl;
     if (distance > 0 || distance < 0 || distance == 0) {
-      if (point.y < quadWidth / 2 && point.y > -quadWidth / 2 && distance < collision_distance && point.z < quadHeight / 2 && point.z > -quadHeight / 2)
+      if (point.y < quadWidth / 2 && point.y > -quadWidth / 2 && distance < collision_distance && point.z < quadHeight / 2 && point.z > -quadHeight / 2 && distance > min_distance)
       {
 	point.r = 255;
 	point.g = 255;
@@ -164,11 +190,15 @@ void colorize ()
 	  willCollide = true;
 	}
       }
-      else if (distance < 1.0)
+      else if (distance < min_distance)
+      {
+	
+      }
+      else if (distance < collision_distance)
       {
 	point.r = 255;
       }
-      else if (distance < 2.0)
+      else if (distance < 2 * collision_distance)
       {
 	point.g = 255;
       }
