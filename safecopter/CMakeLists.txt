@@ -136,6 +136,7 @@ include_directories(
 add_executable(pc_combine src/pc_combine.cpp)
 add_executable(markers src/markers.cpp)
 add_executable(state_publisher src/state_publisher.cpp)
+add_executable(offb_node src/offb_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -149,6 +150,7 @@ target_link_libraries(pc_combine
 
 target_link_libraries(state_publisher ${catkin_LIBRARIES})
 target_link_libraries(markers ${catkin_LIBRARIES})
+target_link_libraries(offb_node ${catkin_LIBRARIES})
 
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
