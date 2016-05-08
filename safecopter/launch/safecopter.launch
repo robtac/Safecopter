@@ -34,4 +34,6 @@
   <arg name="sensor" value="0005-1203-0034-2215" />
   <arg name="publish_tf" value="true" />
  </include>
+
+ <node name="markers" pkg="safecopter" type="markers" />
 </launch>

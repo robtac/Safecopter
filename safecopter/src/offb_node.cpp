@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     ros::Time last_request = ros::Time::now();
 
     while(ros::ok()){
-        if( current_state.mode = "OFFBOARD" && current_state.armed &&
+        if( current_state.mode == "OFFBOARD" && current_state.armed &&
             (ros::Time::now() - last_request > ros::Duration(5.0))){
             
 	  local_pos_pub.publish(pose);
