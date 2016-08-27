@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   pcl_conversions
 )
-
 find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
@@ -133,6 +132,7 @@ include_directories(
 # add_dependencies(safecopter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
+add_executable(safecopter src/safecopter.cpp)
 add_executable(pc_combine src/pc_combine.cpp)
 add_executable(markers src/markers.cpp)
 add_executable(state_publisher src/state_publisher.cpp)
@@ -145,6 +145,10 @@ add_executable(pub_setpoints src/pub_setpoints.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(pc_combine
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+target_link_libraries(safecopter
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )

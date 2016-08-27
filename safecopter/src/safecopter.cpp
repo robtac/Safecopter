@@ -10,12 +10,13 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/octree/octree.h>
 
 #include <visualization_msgs/Marker.h>
 
 #include <math.h>
 
-#include "pc_combine.h"
+#include "safecopter.h"
 
 using namespace std;
 
@@ -24,9 +25,12 @@ bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
-float min_distance = 0.5;
+float min_distance = 0.5f;
 float collision_distance = 0.7;
+float resolution = 1.0f;
 
+pcl::octree::OctreePointCloudSearch<pcl::PointXYZ> octree (resolution);
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
 pcl::PointCloud<pcl::PointXYZRGB> output_pcl, output1_pcl, output2_pcl, output3_pcl;
 
@@ -95,32 +99,26 @@ bool detect_collision (float degree_theta)
   Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
   float theta = (M_PI / 180) * degree_theta;
   
-  pcl::PointXYZRGB point;
+  Eigen::Vector3f lowerBoxCorner (0.0f, -quadWidth / 2, -quadHeight / 2);
+  Eigen::Vector3f upperBoxCorner (min_distance, quadWidth / 2, quadHeight / 2);
+  std::vector<int> indexVector;
   
-  transform_2.rotate (Eigen::AngleAxisf (theta, Eigen::Vector3f::UnitZ()));
-  
-  for (int i = 0; i < output_pcl.size(); i++)
+  if (octree.boxSearch (lowerBoxCorner, upperBoxCorner, indexVector) > 10)
   {
-    pcl::PointXYZRGB originalPoint = output_pcl.at(i);
-    double distance = sqrt((originalPoint.x * originalPoint.x) + (originalPoint.y * originalPoint.y) + (originalPoint.z * originalPoint.z));
-    //std::cout << "d= " << distance << std::endl;
-    if (distance > 0 || distance < 0 || distance == 0) { // Null test
-      point = pcl::transformPoint (originalPoint, transform_2);
-      //std::cout << "OriginalPoint: " << originalPoint.x << " " << originalPoint.y << " " << originalPoint.z << " New Point: " << point.x << " " << point.y << " " << point.z << std::endl;
-      
-      if (point.y < quadWidth / 2 && point.y > -quadWidth / 2 && distance < collision_distance && point.z < quadHeight / 2 && point.z > -quadHeight / 2 && distance > min_distance)
-      {
-	collidingPoints = collidingPoints + 1;
-	//std::cout << "Colliding points: " << collidingPoints << " ";
-	if (collidingPoints > 20)
-	{
-	  willCollide = true;
-	  break;
-	}
-      }
-      //output_pcl.at(i) = point;
-    }
+    std::cout << "Will Collide" << std::endl;
+    //willCollide = true;
   }
+  
+//  pcl::PointXYZ searchPoint;
+//  searchPoint.x = 0;
+//  searchPoint.y = 0;
+//  searchPoint.z = 0;
+//  float radius = 1.0f;
+//  std::vector<int> pointIdxRadiusSearch;
+//  std::vector<float> pointRadiusSquaredDistance;
+  
+//  std::cout << octree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) << std::endl;
+  
   return willCollide;
 }
 
@@ -237,7 +235,12 @@ void pcl_combine ()
   output_pcl = output1_pcl;
   output_pcl += output2_pcl;
   output_pcl += output3_pcl;
-
+  
+  copyPointCloud(output_pcl, *cloud);
+  octree.deleteTree ();
+  octree.setInputCloud (cloud);
+  octree.addPointsFromInputCloud ();
+  
   colorize();
 
   pcl::toROSMsg(output_pcl, output);
