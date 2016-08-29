@@ -39,4 +39,9 @@
  </include>
 
  <node name="markers" pkg="safecopter" type="markers" />
+
+ <node name="octomap" pkg="octomap_server" type="octomap_server_node">
+  <!-- <remap from="cloud_in" to="/cloud_in"/>-->
+  <param name="frame_id" type="string" value="base_link"/>
+ </node>
 </launch>

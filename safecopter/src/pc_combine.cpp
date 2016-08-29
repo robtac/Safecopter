@@ -350,7 +350,7 @@ int main (int argc, char** argv)
   ros::Subscriber sub3 = nh.subscribe("/pf3/points", 1, cloud_cb_cam3);
   
   // Create a ROS publisher for the output point cloud
-  pub = nh.advertise<sensor_msgs::PointCloud2> ("output", 1);
+  pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
   new_direction_pub = nh.advertise<visualization_msgs::Marker>("new_direction", 1);
   // Spin
   ros::spin ();
