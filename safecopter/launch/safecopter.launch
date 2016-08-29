@@ -21,18 +21,21 @@
   <arg name="base_name" value="pf1" />
   <arg name="sensor" value="0005-1203-0034-1806" />
   <arg name="publish_tf" value="true" />
+  <arg name="max_noise" value="0.04" />
  </include>
 
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
   <arg name="base_name" value="pf2" />
   <arg name="sensor" value="0005-1203-0034-2008" />
   <arg name="publish_tf" value="true" />
+  <arg name="max_noise" value="0.04" />
  </include>
  
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
   <arg name="base_name" value="pf3" />
   <arg name="sensor" value="0005-1203-0034-2215" />
   <arg name="publish_tf" value="true" />
+  <arg name="max_noise" value="0.04" />
  </include>
 
  <node name="markers" pkg="safecopter" type="markers" />
