@@ -1,7 +1,8 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
-// PCL specific includes
+
+// PCL Includes
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/impl/transforms.hpp>
@@ -10,11 +11,25 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/octree/octree.h>
+
+// FCL Includes
+#include "fcl/config.h"
+#include "fcl/octree.h"
+#include "fcl/traversal/traversal_node_octree.h"
+#include "fcl/broadphase/broadphase.h"
+#include "fcl/shape/geometric_shape_to_BVH_model.h"
+#include "fcl/math/transform.h"
+#include "fcl/collision_data.h"
+#include "fcl/collision_object.h"
+#include "fcl/collision.h"
+#include "fcl/continuous_collision.h"
+#include "fcl/distance.h"
 
 #include <visualization_msgs/Marker.h>
 
 #include <math.h>
+#include <octomap_msgs/Octomap.h>
+#include <octomap_msgs/conversions.h>
 
 #include "safecopter.h"
 
@@ -27,9 +42,9 @@ bool cam3_data_valid = false;
 
 float min_distance = 0.5f;
 float collision_distance = 0.7;
-float resolution = 1.0f;
+float resolution = 0.01;
 
-pcl::octree::OctreePointCloudSearch<pcl::PointXYZ> octree (resolution);
+boost::shared_ptr<const octomap::OcTree> octree;
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
 pcl::PointCloud<pcl::PointXYZRGB> output_pcl, output1_pcl, output2_pcl, output3_pcl;
@@ -96,18 +111,25 @@ bool detect_collision (float degree_theta)
   float quadHeight = 0.4;
   bool willCollide = false;
   int collidingPoints = 0;
-  Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
-  float theta = (M_PI / 180) * degree_theta;
+//  Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
+//  float theta = (M_PI / 180) * degree_theta;
+//  float lowerX = min_distance; float lowerY = (-quadWidth / 2); float lowerZ = (-quadHeight / 2);
+//  float upperX = collision_distance; float upperY = (quadWidth / 2); float upperZ = (quadHeight / 2);
   
-  Eigen::Vector3f lowerBoxCorner (0.0f, -quadWidth / 2, -quadHeight / 2);
-  Eigen::Vector3f upperBoxCorner (min_distance, quadWidth / 2, quadHeight / 2);
-  std::vector<int> indexVector;
+//  std::cout << theta << std::endl << lowerX << " " << lowerY << " " << lowerZ << std::endl;
+//  std::cout << upperX << " " << upperY << " " << upperZ << std::endl;
+//  float lowerBoxX = (lowerX * cos (theta)) - (lowerY * sin (theta));
+//  float lowerBoxY = (lowerX * sin (theta)) + (lowerY * cos (theta));
+//  float lowerBoxZ = lowerZ;
+//  std::cout << lowerBoxX << " " << lowerBoxY << " " << lowerBoxZ << std::endl;
+//  Eigen::Vector3f lowerBoxCorner (lowerBoxX, lowerBoxY, lowerBoxZ);
   
-  if (octree.boxSearch (lowerBoxCorner, upperBoxCorner, indexVector) > 10)
-  {
-    std::cout << "Will Collide" << std::endl;
-    //willCollide = true;
-  }
+//  float upperBoxX = (upperX * cos (theta)) - (upperY * sin (theta));
+//  float upperBoxY = (upperX * sin (theta)) + (upperY * cos (theta));
+//  float upperBoxZ = upperZ;
+//  std::cout << upperBoxX << " " << upperBoxY << " " << upperBoxZ << std::endl;
+//  Eigen::Vector3f upperBoxCorner (upperBoxX, upperBoxY, upperBoxZ);
+//  std::vector<int> indexVector;
   
 //  pcl::PointXYZ searchPoint;
 //  searchPoint.x = 0;
@@ -117,8 +139,25 @@ bool detect_collision (float degree_theta)
 //  std::vector<int> pointIdxRadiusSearch;
 //  std::vector<float> pointRadiusSquaredDistance;
   
-//  std::cout << octree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) << std::endl;
-  
+  fcl::Box *box = new fcl::Box(.1, .1, .1); //arguments are size
+  box->cost_density = 100; //?
+  box->threshold_occupied = 5; //?
+
+  fcl::OcTree *tree = new fcl::OcTree(octree);
+
+  fcl::CollisionObject * obj1 = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(box), fcl::Transform3f());
+  fcl::CollisionObject * obj2 = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(tree), fcl::Transform3f());
+
+  fcl::CollisionRequest request;
+  fcl::CollisionResult result;
+
+  fcl::collide(obj1, obj2, request, result);
+
+  delete obj1;
+  delete obj2;
+
+  std::cout << "NumContacts: " << result.numContacts() << std::endl;
+
   return willCollide;
 }
 
@@ -133,7 +172,7 @@ void avoid_collision ()
     if (detect_collision(degree))
     {
       //std::cout << "Collision detected" << std::endl;
-      //draw_new_direction(-degree, 0.5, true);
+      draw_new_direction(-degree, 0.5, true);
     }
     else
     {
@@ -146,7 +185,7 @@ void avoid_collision ()
     if (detect_collision(-degree))
     {
       //std::cout << "Collision detected" << std::endl;
-      //draw_new_direction(-degree, 0.5, true);
+      draw_new_direction(-degree, 0.5, true);
     }
     else
     {
@@ -169,7 +208,6 @@ void colorize ()
   float quadHeight = 0.4;
   bool willCollide = false;
   int collidingPoints = 0;
-  
   for (int i = 0; i < output_pcl.size(); i++)
   {
     pcl::PointXYZRGB point = output_pcl.at(i);
@@ -222,6 +260,12 @@ void colorize ()
   }
 }
 
+void callback_tree (const octomap_msgs::Octomap & msg){
+  octree = boost::shared_ptr<const octomap::OcTree>(octomap_msgs::binaryMsgToMap (msg));
+  //octree = boost::shared_ptr<const octomap::OcTree>(msg);
+  colorize();
+}
+
 void pcl_combine ()
 {
   ros::Time newTime;
@@ -235,13 +279,8 @@ void pcl_combine ()
   output_pcl = output1_pcl;
   output_pcl += output2_pcl;
   output_pcl += output3_pcl;
-  
-  copyPointCloud(output_pcl, *cloud);
-  octree.deleteTree ();
-  octree.setInputCloud (cloud);
-  octree.addPointsFromInputCloud ();
-  
-  colorize();
+
+  // colorize();
 
   pcl::toROSMsg(output_pcl, output);
 
@@ -351,9 +390,10 @@ int main (int argc, char** argv)
   ros::Subscriber sub = nh.subscribe ("/pf1/points", 1, cloud_cb_cam1);
   ros::Subscriber sub2 = nh.subscribe ("/pf2/points", 1, cloud_cb_cam2);
   ros::Subscriber sub3 = nh.subscribe("/pf3/points", 1, cloud_cb_cam3);
+  ros::Subscriber subTree = nh.subscribe("/octomap_binary", 1, &callback_tree);
   
   // Create a ROS publisher for the output point cloud
-  pub = nh.advertise<sensor_msgs::PointCloud2> ("output", 1);
+  pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
   new_direction_pub = nh.advertise<visualization_msgs::Marker>("new_direction", 1);
   // Spin
   ros::spin ();

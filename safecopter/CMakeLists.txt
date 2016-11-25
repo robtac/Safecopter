@@ -11,8 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   pcl_ros
   pcl_conversions
+  fcl
 )
 find_package(PCL REQUIRED)
+find_package(octomap REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -120,6 +122,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+include_directories(${OCTOMAP_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(safecopter
@@ -138,6 +141,7 @@ add_executable(markers src/markers.cpp)
 add_executable(state_publisher src/state_publisher.cpp)
 add_executable(offb_node src/offb_node.cpp)
 add_executable(pub_setpoints src/pub_setpoints.cpp)
+add_executable(simple_example src/simple_example.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -149,14 +153,18 @@ target_link_libraries(pc_combine
   ${PCL_LIBRARIES}
 )
 target_link_libraries(safecopter
+  ${OCTOMAP_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
+
+link_libraries(${OCTOMAP_LIBRARIES})
 
 target_link_libraries(state_publisher ${catkin_LIBRARIES})
 target_link_libraries(markers ${catkin_LIBRARIES})
 target_link_libraries(offb_node ${catkin_LIBRARIES})
 target_link_libraries(pub_setpoints ${catkin_LIBRARIES})
+target_link_libraries(simple_example ${OCTOMAP_LIBRARIES})
 
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})

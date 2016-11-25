@@ -41,7 +41,12 @@
  <node name="markers" pkg="safecopter" type="markers" />
 
  <node name="octomap" pkg="octomap_server" type="octomap_server_node">
-  <!-- <remap from="cloud_in" to="/cloud_in"/>-->
-  <param name="frame_id" type="string" value="base_link"/>
+  <param name="frame_id" type="string" value="base_link" />
+  <param name="store_pointclouds" type="boolean" value="false" />
+  <param name="resolution" type="double" value="0.05" />
+  <param name="pointcloud_min_z" type="double" value="-10" />
+  <param name="pointcloud_max_z" type="double" value="10" />
+  <param name="sensor_model/miss" type="double" value="0" />
+  <param name="sensor_model/max_range" type="double" value="5" />
  </node>
 </launch>
