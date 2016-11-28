@@ -22,6 +22,7 @@
   <arg name="sensor" value="0005-1203-0034-1806" />
   <arg name="publish_tf" value="true" />
   <arg name="max_noise" value="0.04" />
+  <arg name="operation_mode" value="0" />
  </include>
 
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
@@ -29,6 +30,7 @@
   <arg name="sensor" value="0005-1203-0034-2008" />
   <arg name="publish_tf" value="true" />
   <arg name="max_noise" value="0.04" />
+  <arg name="operation_mode" value="0" />
  </include>
  
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
@@ -36,6 +38,7 @@
   <arg name="sensor" value="0005-1203-0034-2215" />
   <arg name="publish_tf" value="true" />
   <arg name="max_noise" value="0.04" />
+  <arg name="operation_mode" value="0" />
  </include>
 
  <node name="markers" pkg="safecopter" type="markers" />
