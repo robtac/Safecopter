@@ -51,6 +51,9 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
 pcl::PointCloud<pcl::PointXYZRGB> output_pcl, output1_pcl, output2_pcl, output3_pcl;
 
+fcl::CollisionObject * collision_box;
+fcl::CollisionObject * collision_tree;
+
 string base_link_id = "base_link";
 
 pcl::PCLPointCloud2 pcl_cam1, pcl_cam2, pcl_combined;
@@ -176,9 +179,9 @@ bool detect_collision (float degree_theta)
   //boost::shared_ptr<octomap::OcTree> ptr = octree;
   fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octree));
 
-  fcl::Vec3f boxCenter = fcl::Vec3f(collision_distance / 2 + 0.2, 0, 0);
-  fcl::CollisionObject * collision_box = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(box), boxCenter);
-  fcl::CollisionObject * collision_tree = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(tree), fcl::Transform3f());
+  fcl::Vec3f boxCenter = fcl::Vec3f(collision_distance / 2 + 0.3, 0, 0);
+  collision_box = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(box), boxCenter);
+  collision_tree = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(tree), fcl::Transform3f());
 
   fcl::CollisionRequest request;
   fcl::CollisionResult result;
@@ -294,12 +297,13 @@ void colorize ()
 }
 
 void callback_tree (const octomap_msgs::Octomap & msg){
+
+//  octomap::AbstractOcTree* tree = new octomap::AbstractOcTree::AbstractOcTree();
+//  tree = octomap_msgs::binaryMsgToMap (msg);
   octomap::AbstractOcTree* tree = octomap_msgs::binaryMsgToMap (msg);
   octree = dynamic_cast<octomap::OcTree*>(tree);
-  //octomap::OcTree tree (0.05);
-
-  //octree = boost::shared_ptr<octomap::OcTree>(tree);
   avoid_collision();
+  delete(tree);
 }
 
 void pcl_combine ()
