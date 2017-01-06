@@ -11,6 +11,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 // FCL Includes
 #include "fcl/config.h"
@@ -49,7 +50,7 @@ float resolution = 0.01;
 octomap::OcTree* octree = new octomap::OcTree(0.05);
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
-pcl::PointCloud<pcl::PointXYZRGB> output_pcl, output1_pcl, output2_pcl, output3_pcl;
+pcl::PointCloud<pcl::PointXYZRGB> filtered_pcl, output_pcl, output1_pcl, output2_pcl, output3_pcl;
 
 fcl::CollisionObject * collision_box;
 fcl::CollisionObject * collision_tree;
@@ -110,7 +111,7 @@ void draw_new_direction (float rotation, float distance, bool willCollide)
   new_direction_pub.publish(marker);
 }
 
-void drawCUBE(fcl::Vec3f vec, int c_color, fcl::Vec3f size)
+void drawCube(fcl::Vec3f vec, int c_color, fcl::Vec3f size, fcl::Matrix3f rotation_mat)
     {
         visualization_msgs::Marker marker;
         marker.header.frame_id = base_link_id;
@@ -119,13 +120,17 @@ void drawCUBE(fcl::Vec3f vec, int c_color, fcl::Vec3f size)
         marker.id = 22;
         marker.type = visualization_msgs::Marker::CUBE;
         marker.action = visualization_msgs::Marker::ADD;
+
         marker.pose.position.x = vec[0];
         marker.pose.position.y = vec[1];
         marker.pose.position.z = vec[2];
-        marker.pose.orientation.x = 0;
-        marker.pose.orientation.y = 0;//poseQ[1];
-        marker.pose.orientation.z = 0;//poseQ[2];
-        marker.pose.orientation.w = 1;//poseQ[3];
+
+        fcl::Quaternion3f rotation_quat;
+        rotation_quat.fromRotation(rotation_mat);
+        marker.pose.orientation.x = rotation_quat.getX();
+        marker.pose.orientation.y = rotation_quat.getY();
+        marker.pose.orientation.z = rotation_quat.getZ();
+        marker.pose.orientation.w = rotation_quat.getW();
 
         marker.scale.x = size[0];
         marker.scale.y = size[1];
@@ -166,21 +171,23 @@ bool detect_collision (float degree_theta)
   float quadWidth = 0.8;
   float quadHeight = 0.4;
   bool willCollide = false;
-//  Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
-  float theta = (M_PI / 180) * degree_theta;
-//  float lowerX = min_distance; float lowerY = (-quadWidth / 2); float lowerZ = (-quadHeight / 2);
-//  float upperX = collision_distance; float upperY = (quadWidth / 2); float upperZ = (quadHeight / 2);
-  
+  float theta = (M_PI / 180) * -degree_theta;
+  //fcl::Matrix3f rotation_mat = fcl::Matrix3f(1, 0, 0, 0, cos(theta), -sin(theta), 0, sin(theta), cos(theta)); // X rotation
+  //fcl::Matrix3f rotation_mat = fcl::Matrix3f(cos(theta), 0, sin(theta), 0, 1, 0, -sin(theta), 0, cos(theta)); // Y rotation
+  fcl::Matrix3f rotation_mat = fcl::Matrix3f(cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0, 0, 0, 1); // Z rotation
+
   fcl::Vec3f size = fcl::Vec3f(collision_distance, quadWidth, quadHeight);
-  fcl::Box *box = new fcl::Box(size[0], size[1], size[2]); //arguments are size
-  box->cost_density = 100; //?
-  box->threshold_occupied = 5; //?
+  fcl::Box *box = new fcl::Box(size[0], size[1], size[2]);
+  box->cost_density = 100;
+  box->threshold_occupied = 5;
 
   //boost::shared_ptr<octomap::OcTree> ptr = octree;
   fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octree));
 
-  fcl::Vec3f boxCenter = fcl::Vec3f(collision_distance / 2 + 0.3, 0, 0);
-  collision_box = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(box), boxCenter);
+  fcl::Vec3f box_center = fcl::Vec3f(collision_distance / 2 + min_distance, 0, 0);
+  fcl::Vec3f translation_vec = fcl::Vec3f((box_center[0] * cos(theta) - box_center[1] * sin(theta)), (box_center[1] * cos(theta) + box_center[0] * sin(theta)), box_center[2]);
+  fcl::Transform3f transformation = fcl::Transform3f(rotation_mat, translation_vec);
+  collision_box = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(box), transformation);
   collision_tree = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(tree), fcl::Transform3f());
 
   fcl::CollisionRequest request;
@@ -193,11 +200,10 @@ bool detect_collision (float degree_theta)
 
   if (result.isCollision() == true)
   {
-      drawCUBE(vec, 0, size);
+      drawCube(vec, 2, size, rotation_mat);
+  } else {
+      drawCube(vec, 3, size, rotation_mat);
   }
-
-//  delete collision_box;
-//  delete collision_tree;
 
   if (result.numContacts() > 0)
   {
@@ -211,8 +217,10 @@ void avoid_collision ()
   int max_collision_angle = 90;
   int value_to_add = 5;
   bool willCollide = true;
+  int counter = 0;
   for (int degree = 0; degree <= max_collision_angle; degree = degree + value_to_add)
   {
+      counter++;
     if (detect_collision(degree))
     {
       //std::cout << "Collision detected" << std::endl;
@@ -243,6 +251,7 @@ void avoid_collision ()
     }
   }
   
+  std::cout << "Counter: " << counter;
   if (willCollide)
   {
     draw_new_direction(0, 0.5, true);
@@ -275,24 +284,25 @@ void colorize ()
       }
       else if (distance < min_distance)
       {
-	
+
       }
       else if (distance < collision_distance)
       {
-	point.r = 255;
+        point.r = 255;
+        output_pcl.at(i) = point;
       }
       else if (distance < 2 * collision_distance)
       {
-	point.r = 255;
-	point.g = 255;
+        point.r = 255;
+        point.g = 255;
+        output_pcl.at(i) = point;
       }
       else
       {
-	point.b = 255;
+        point.b = 255;
+        output_pcl.at(i) = point;
       }
     }
-    
-    output_pcl.at(i) = point;
   }
 }
 
@@ -302,7 +312,9 @@ void callback_tree (const octomap_msgs::Octomap & msg){
 //  tree = octomap_msgs::binaryMsgToMap (msg);
   octomap::AbstractOcTree* tree = octomap_msgs::binaryMsgToMap (msg);
   octree = dynamic_cast<octomap::OcTree*>(tree);
+  ros::Time firstTime = ros::Time::now();
   avoid_collision();
+  std::cout << "Avoid Collision Time: " << ros::Time::now() - firstTime << std::endl;
   delete(tree);
 }
 
@@ -321,33 +333,21 @@ void pcl_combine ()
   output_pcl += output2_pcl;
   output_pcl += output3_pcl;
 
+//  pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+//  sor.setInputCloud(output_pcl);
+//  sor.setMeanK(50);
+//  sor.setStddevMulThres(1.0);
+//  sor.filter(*filtered_pcl);
+
   colorize();
 
   pcl::toROSMsg(output_pcl, output);
-
-//  octomap::Pointcloud octPointCloud;
-//  for (int i = 0; i < output_pcl.size(); i++)
-//  {
-//      pcl::PointXYZRGB point = output_pcl.at(i);
-//      double distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
-//      if (distance > 0 || distance < 0 || distance == 0) // null test
-//      {
-//          octomap::point3d endpoint (point.x, point.y, point.z);
-//          octPointCloud.push_back(endpoint);
-//      }
-//  }
-
-//  octomap::point3d origin (0.0, 0.0, 0.0);
-//  octree -> insertPointCloud (octPointCloud, origin);
-//  octree -> updateInnerOccupancy();
-
-  //colorize();
 
   pub.publish(output);
   
   newTime = ros::Time::now();
   //std::cout << "Pcl_combine time: " << (newTime - firstTime) << std::endl;
-  std::cout << "Time since last point clould published: " << (newTime - oldTime) << std::endl;
+  //std::cout << "Time since last point clould published: " << (newTime - oldTime) << std::endl;
   oldTime = newTime;
 }
 
