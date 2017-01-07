@@ -6,11 +6,11 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/impl/transforms.hpp>
-#include <pcl/io/pcd_io.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 
 // FCL Includes
@@ -30,15 +30,18 @@
 
 #include <math.h>
 #include <octomap/octomap.h>
+#include <octomap/OcTreeKey.h>
 #include <octomap_ros/conversions.h>
 #include <octomap_msgs/Octomap.h>
+#include <octomap_msgs/GetOctomap.h>
+#include <octomap_msgs/BoundingBoxQuery.h>
 #include <octomap_msgs/conversions.h>
 
 #include "safecopter.h"
 
 using namespace std;
 
-ros::Publisher pub, new_direction_pub, visCubePub;
+ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -51,6 +54,7 @@ octomap::OcTree* octree = new octomap::OcTree(0.05);
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
 pcl::PointCloud<pcl::PointXYZRGB> filtered_pcl, output_pcl, output1_pcl, output2_pcl, output3_pcl;
+octomap::OcTree *octmap;
 
 fcl::CollisionObject * collision_box;
 fcl::CollisionObject * collision_tree;
@@ -60,6 +64,8 @@ string base_link_id = "base_link";
 pcl::PCLPointCloud2 pcl_cam1, pcl_cam2, pcl_combined;
 tf::TransformListener *tf_listener;
 ros::Time oldTime;
+
+bool m_latchedTopics;
 
 void draw_new_direction (float rotation, float distance, bool willCollide)
 {
@@ -163,7 +169,7 @@ void drawCube(fcl::Vec3f vec, int c_color, fcl::Vec3f size, fcl::Matrix3f rotati
             marker.color.g = 1.0;
         }
         //marker.lifetime = ros::Duration(0.3);
-        visCubePub.publish(marker);
+        vis_cube_pub.publish(marker);
 }
 
 bool detect_collision (float degree_theta)
@@ -182,7 +188,8 @@ bool detect_collision (float degree_theta)
   box->threshold_occupied = 5;
 
   //boost::shared_ptr<octomap::OcTree> ptr = octree;
-  fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octree));
+  //fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octree));
+  fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octmap));
 
   fcl::Vec3f box_center = fcl::Vec3f(collision_distance / 2 + min_distance, 0, 0);
   fcl::Vec3f translation_vec = fcl::Vec3f((box_center[0] * cos(theta) - box_center[1] * sin(theta)), (box_center[1] * cos(theta) + box_center[0] * sin(theta)), box_center[2]);
@@ -272,15 +279,15 @@ void colorize ()
     if (distance > 0 || distance < 0 || distance == 0) { // null test
       if (point.y < quadWidth / 2 && point.y > -quadWidth / 2 && distance < collision_distance && point.z < quadHeight / 2 && point.z > -quadHeight / 2 && distance > min_distance)
       {
-    point.r = 255;
-    point.g = 255;
-    point.b = 255;
-	
-	collidingPoints++;
-	if (collidingPoints > 20)
-	{
-	  willCollide = true;
-	}
+        point.r = 255;
+        point.g = 255;
+        point.b = 255;
+
+        collidingPoints++;
+        if (collidingPoints > 20)
+        {
+          willCollide = true;
+        }
       }
       else if (distance < min_distance)
       {
@@ -339,7 +346,48 @@ void pcl_combine ()
 //  sor.setStddevMulThres(1.0);
 //  sor.filter(*filtered_pcl);
 
+  octomap::OcTree tree = octomap::OcTree(0.05);
+  octmap = &tree;
+  octmap->setProbHit(0.9);
+  octmap->setProbMiss(0.1);
+  octmap->setClampingThresMin(0.49);
+  octmap->setClampingThresMax(0.51);
+  octomap::KeySet occupied_cells;
+
+  for(pcl::PointCloud<pcl::PointXYZRGB>::const_iterator it = output_pcl.begin(); it != output_pcl.end(); it++)
+  {
+      octomap::point3d point(it->x, it->y, it->z);
+      octomap::OcTreeKey key;
+      if (octmap->coordToKeyChecked(point, key))
+      {
+          occupied_cells.insert(key);
+      }
+  }
+
+  for (octomap::KeySet::iterator it = occupied_cells.begin(), end = occupied_cells.end(); it != end; it++)
+  {
+      octmap->updateNode(*it, true);
+  }
+
   colorize();
+
+  avoid_collision();
+
+  bool publishBinaryMap = (m_latchedTopics || binary_map_pub.getNumSubscribers() > 0);
+  if (publishBinaryMap)
+  {
+      octomap_msgs::Octomap map;
+      map.header.frame_id = base_link_id;
+      map.header.stamp = ros::Time::now();
+      if (octomap_msgs::binaryMapToMsg(*octmap, map))
+      {
+          binary_map_pub.publish(map);
+      }
+      else
+      {
+          ROS_ERROR("Error serializing OctoMap");
+      }
+  }
 
   pcl::toROSMsg(output_pcl, output);
 
@@ -455,7 +503,14 @@ int main (int argc, char** argv)
   // Create a ROS publisher for the output point cloud
   pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
   new_direction_pub = nh.advertise<visualization_msgs::Marker>("new_direction", 1);
-  visCubePub = nh.advertise<visualization_msgs::Marker>("collision_box", 1);
+  vis_cube_pub = nh.advertise<visualization_msgs::Marker>("collision_box", 1);
+  m_latchedTopics = true;
+  if (m_latchedTopics){
+    ROS_INFO("Publishing latched (single publish will take longer, all topics are prepared)");
+  } else
+    ROS_INFO("Publishing non-latched (topics are only prepared as needed, will only be re-published on map change");
+  binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 1, m_latchedTopics);
+  //binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 1);
   // Spin
   ros::spin ();
 }
