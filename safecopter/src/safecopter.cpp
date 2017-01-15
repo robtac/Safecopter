@@ -50,7 +50,6 @@ float min_distance = 0.5f;
 float collision_distance = 0.7;
 float resolution = 0.01;
 
-octomap::OcTree* octree = new octomap::OcTree(0.05);
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
 pcl::PointCloud<pcl::PointXYZRGB> filtered_pcl, output_pcl, output1_pcl, output2_pcl, output3_pcl;
@@ -187,8 +186,6 @@ bool detect_collision (float degree_theta)
   box->cost_density = 100;
   box->threshold_occupied = 5;
 
-  //boost::shared_ptr<octomap::OcTree> ptr = octree;
-  //fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octree));
   fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octmap));
 
   fcl::Vec3f box_center = fcl::Vec3f(collision_distance / 2 + min_distance, 0, 0);
@@ -258,7 +255,7 @@ void avoid_collision ()
     }
   }
   
-  std::cout << "Counter: " << counter;
+  //std::cout << "Counter: " << counter;
   if (willCollide)
   {
     draw_new_direction(0, 0.5, true);
@@ -275,7 +272,6 @@ void colorize ()
   {
     pcl::PointXYZRGB point = output_pcl.at(i);
     double distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
-    //std::cout << "d= " << distance << std::endl;
     if (distance > 0 || distance < 0 || distance == 0) { // null test
       if (point.y < quadWidth / 2 && point.y > -quadWidth / 2 && distance < collision_distance && point.z < quadHeight / 2 && point.z > -quadHeight / 2 && distance > min_distance)
       {
@@ -313,18 +309,6 @@ void colorize ()
   }
 }
 
-void callback_tree (const octomap_msgs::Octomap & msg){
-
-//  octomap::AbstractOcTree* tree = new octomap::AbstractOcTree::AbstractOcTree();
-//  tree = octomap_msgs::binaryMsgToMap (msg);
-  octomap::AbstractOcTree* tree = octomap_msgs::binaryMsgToMap (msg);
-  octree = dynamic_cast<octomap::OcTree*>(tree);
-  ros::Time firstTime = ros::Time::now();
-  avoid_collision();
-  std::cout << "Avoid Collision Time: " << ros::Time::now() - firstTime << std::endl;
-  delete(tree);
-}
-
 void pcl_combine ()
 {
   ros::Time newTime;
@@ -340,14 +324,9 @@ void pcl_combine ()
   output_pcl += output2_pcl;
   output_pcl += output3_pcl;
 
-//  pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
-//  sor.setInputCloud(output_pcl);
-//  sor.setMeanK(50);
-//  sor.setStddevMulThres(1.0);
-//  sor.filter(*filtered_pcl);
-
-  octomap::OcTree tree = octomap::OcTree(0.05);
-  octmap = &tree;
+//  octomap::OcTree tree = octomap::OcTree(0.05);
+//  octmap = &tree;
+  octmap = new octomap::OcTree(0.05);
   octmap->setProbHit(0.9);
   octmap->setProbMiss(0.1);
   octmap->setClampingThresMin(0.49);
@@ -394,9 +373,11 @@ void pcl_combine ()
   pub.publish(output);
   
   newTime = ros::Time::now();
-  //std::cout << "Pcl_combine time: " << (newTime - firstTime) << std::endl;
+  std::cout << "Time to proces: " << (newTime - firstTime) << std::endl;
   //std::cout << "Time since last point clould published: " << (newTime - oldTime) << std::endl;
   oldTime = newTime;
+
+  delete octmap;
 }
 
 void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
@@ -498,7 +479,6 @@ int main (int argc, char** argv)
   ros::Subscriber sub = nh.subscribe ("/pf1/points", 1, cloud_cb_cam1);
   ros::Subscriber sub2 = nh.subscribe ("/pf2/points", 1, cloud_cb_cam2);
   ros::Subscriber sub3 = nh.subscribe("/pf3/points", 1, cloud_cb_cam3);
-  ros::Subscriber subTree = nh.subscribe("/octomap_binary", 1, &callback_tree);
   
   // Create a ROS publisher for the output point cloud
   pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
