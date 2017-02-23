@@ -1,0 +1,16 @@
+digraph G {
+"base_link" -> "cam1_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 50.213 Hz\nMost recent transform: 1462684627.051 ( 0.013 sec old)\nBuffer length: 4.899 sec\n"];
+"base_link" -> "cam2_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 50.213 Hz\nMost recent transform: 1462684627.051 ( 0.013 sec old)\nBuffer length: 4.899 sec\n"];
+"base_link" -> "cam3_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 50.213 Hz\nMost recent transform: 1462684627.051 ( 0.013 sec old)\nBuffer length: 4.899 sec\n"];
+"cam1_link" -> "pf1_link"[label="Broadcaster: /cam1\nAverage rate: 10.164 Hz\nMost recent transform: 1462684627.117 ( -0.053 sec old)\nBuffer length: 4.821 sec\n"];
+"base_link" -> "base_link2"[label="Broadcaster: /base_link\nAverage rate: 10.169 Hz\nMost recent transform: 1462684627.116 ( -0.052 sec old)\nBuffer length: 4.819 sec\n"];
+"cam3_link" -> "pf3_link"[label="Broadcaster: /cam3\nAverage rate: 10.166 Hz\nMost recent transform: 1462684627.122 ( -0.058 sec old)\nBuffer length: 4.820 sec\n"];
+"pf1_link" -> "pf1_optical_frame"[label="Broadcaster: /pf1_static_tf\nAverage rate: 10.159 Hz\nMost recent transform: 1462684627.131 ( -0.067 sec old)\nBuffer length: 4.824 sec\n"];
+"cam2_link" -> "pf2_link"[label="Broadcaster: /cam2\nAverage rate: 10.160 Hz\nMost recent transform: 1462684627.145 ( -0.081 sec old)\nBuffer length: 4.823 sec\n"];
+"pf2_link" -> "pf2_optical_frame"[label="Broadcaster: /pf2_static_tf\nAverage rate: 10.169 Hz\nMost recent transform: 1462684627.151 ( -0.087 sec old)\nBuffer length: 4.819 sec\n"];
+"pf3_link" -> "pf3_optical_frame"[label="Broadcaster: /pf3_static_tf\nAverage rate: 10.160 Hz\nMost recent transform: 1462684627.081 ( -0.017 sec old)\nBuffer length: 4.724 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1462684627.064"[ shape=plaintext ] ;
+ }->"base_link";
+}
