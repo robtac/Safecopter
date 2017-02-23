@@ -1,3 +1,9 @@
+/**
+ * @file offb_node.cpp
+ * @brief offboard example node, written with mavros version 0.14.2, px4 flight
+ * stack and tested in Gazebo SITL
+ */
+
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/CommandBool.h>
@@ -35,7 +41,7 @@ int main(int argc, char **argv)
     geometry_msgs::PoseStamped pose;
     pose.pose.position.x = 0;
     pose.pose.position.y = 0;
-    pose.pose.position.z = 0.3;
+    pose.pose.position.z = 2;
 
     //send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
@@ -53,14 +59,26 @@ int main(int argc, char **argv)
     ros::Time last_request = ros::Time::now();
 
     while(ros::ok()){
-        if( current_state.mode == "OFFBOARD" && current_state.armed &&
+       /* if( current_state.mode != "OFFBOARD" &&
             (ros::Time::now() - last_request > ros::Duration(5.0))){
-            
-	  local_pos_pub.publish(pose);
-	  
+            if( set_mode_client.call(offb_set_mode) &&
+                offb_set_mode.response.success){
+                ROS_INFO("Offboard enabled");
+            }
             last_request = ros::Time::now();
-        }
-        
+        } else {
+            if( !current_state.armed &&
+                (ros::Time::now() - last_request > ros::Duration(5.0))){
+                if( arming_client.call(arm_cmd) &&
+                    arm_cmd.response.success){
+                    ROS_INFO("Vehicle armed");
+                }
+                last_request = ros::Time::now();
+            }
+        } */
+    ROS_INFO("Publishing pose");
+        local_pos_pub.publish(pose);
+
         ros::spinOnce();
         rate.sleep();
     }
