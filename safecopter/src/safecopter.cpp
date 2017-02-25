@@ -28,6 +28,7 @@
 
 #include <visualization_msgs/Marker.h>
 
+#include <std_msgs/Float32MultiArray.h>
 #include <math.h>
 #include <octomap/octomap.h>
 #include <octomap/OcTreeKey.h>
@@ -41,7 +42,7 @@
 
 using namespace std;
 
-ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub;
+ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -169,6 +170,54 @@ void drawCube(fcl::Vec3f vec, int c_color, fcl::Vec3f size, fcl::Matrix3f rotati
         }
         //marker.lifetime = ros::Duration(0.3);
         vis_cube_pub.publish(marker);
+}
+
+void pub_safecopter_data (double isCollision, double collisionDirection) {
+    float freePathDirection = collisionDirection + 180;
+    std::cout << "Collision Direction: " << collisionDirection << " -- Free Path Direction: " << freePathDirection << std::endl;
+    std_msgs::Float32MultiArray array;
+    array.data.clear();
+    array.data.push_back(isCollision);
+    array.data.push_back(collisionDirection);
+    array.data.push_back(freePathDirection);
+    safecopter_pub.publish(array);
+    draw_new_direction(collisionDirection, 0.5, false);
+}
+
+void detect_object () {
+    float willCollide = 0;
+    int collidingPoints = 0;
+    pcl::PointXYZRGB closestPoint = output_pcl.at(0);
+    for (int i = 0; i < output_pcl.size(); i++)
+    {
+      pcl::PointXYZRGB point = output_pcl.at(i);
+      float distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
+      float closestPointDistance = sqrt((closestPoint.x * closestPoint.x) + (closestPoint.y * closestPoint.y) + (closestPoint.z * closestPoint.z));
+      if (closestPointDistance > 0 || closestPointDistance < 0 || closestPointDistance == 0)
+      {
+          if (distance > 0 || distance < 0 || distance == 0) { // null test
+            if (distance < closestPointDistance) {
+                closestPoint = point;
+            }
+
+            if (distance > min_distance && distance < collision_distance)
+            {
+                collidingPoints++;
+                if (collidingPoints > 20)
+                {
+                  willCollide = 1;
+                }
+            }
+          }
+      } else {
+          if (distance > 0 || distance < 0 || distance == 0) {
+            closestPoint = point;
+          }
+      }
+    }
+    float theta = tan(closestPoint.x / closestPoint.y);
+    float degreeTheta = theta * 180 / M_PI;
+    pub_safecopter_data(willCollide, degreeTheta);
 }
 
 bool detect_collision (float degree_theta)
@@ -350,7 +399,9 @@ void pcl_combine ()
 
   colorize();
 
-  avoid_collision();
+  //avoid_collision();
+
+  detect_object();
 
   bool publishBinaryMap = (m_latchedTopics || binary_map_pub.getNumSubscribers() > 0);
   if (publishBinaryMap)
@@ -484,6 +535,8 @@ int main (int argc, char** argv)
   pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
   new_direction_pub = nh.advertise<visualization_msgs::Marker>("new_direction", 1);
   vis_cube_pub = nh.advertise<visualization_msgs::Marker>("collision_box", 1);
+  safecopter_pub = nh.advertise<std_msgs::Float32MultiArray>("safecopter",1);
+
   m_latchedTopics = true;
   if (m_latchedTopics){
     ROS_INFO("Publishing latched (single publish will take longer, all topics are prepared)");
