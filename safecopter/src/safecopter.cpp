@@ -215,7 +215,7 @@ void detect_object () {
           }
       }
     }
-    float theta = tan(closestPoint.x / closestPoint.y);
+    float theta = atan(closestPoint.x / closestPoint.y);
     float degreeTheta = theta * 180 / M_PI;
     pub_safecopter_data(willCollide, degreeTheta);
 }
