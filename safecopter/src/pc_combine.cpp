@@ -14,12 +14,13 @@
 #include <visualization_msgs/Marker.h>
 
 #include <math.h>
+#include <std_msgs/Float64.h>
 
 #include "pc_combine.h"
 
 using namespace std;
 
-ros::Publisher pub, new_direction_pub;
+ros::Publisher pub, new_direction_pub, combine_time_pub, detect_time_pub, avoid_time_pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -172,6 +173,8 @@ void colorize ()
   bool willCollide = false;
   int collidingPoints = 0;
   
+  ros::Time start_detect_time = ros::Time::now();
+
   for (int i = 0; i < output_pcl.size(); i++)
   {
     pcl::PointXYZRGB point = output_pcl.at(i);
@@ -212,10 +215,17 @@ void colorize ()
     output_pcl.at(i) = point;
   }
   
+  std_msgs::Float64 detect_time;
+  detect_time.data = (ros::Time::now() - start_detect_time).toSec() * 1000;
+  detect_time_pub.publish(detect_time);
+
   if (willCollide) 
   {
-    
+    ros::Time start_avoid_time = ros::Time::now();
     avoid_collision();
+    std_msgs::Float64 avoid_time;
+    avoid_time.data = (ros::Time::now() - start_avoid_time).toSec() * 1000;
+    avoid_time_pub.publish(avoid_time);
   }
   else
   {
@@ -234,9 +244,13 @@ void pcl_combine ()
 
   sensor_msgs::PointCloud2 output;
 
+  ros::Time start_combine_time = ros::Time::now();
   output_pcl = output1_pcl;
   output_pcl += output2_pcl;
   output_pcl += output3_pcl;
+  std_msgs::Float64 combine_time;
+  combine_time.data = (ros::Time::now() - start_combine_time).toSec() * 1000;
+  combine_time_pub.publish(combine_time);
 
   colorize();
 
@@ -348,6 +362,9 @@ int main (int argc, char** argv)
   ros::Subscriber sub = nh.subscribe ("/pf1/points", 1, cloud_cb_cam1);
   ros::Subscriber sub2 = nh.subscribe ("/pf2/points", 1, cloud_cb_cam2);
   ros::Subscriber sub3 = nh.subscribe("/pf3/points", 1, cloud_cb_cam3);
+  combine_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/combine_time", 1);
+  detect_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/detect_time", 1);
+  avoid_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/avoid_time", 1);
   
   // Create a ROS publisher for the output point cloud
   pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);

@@ -29,6 +29,7 @@
 #include <visualization_msgs/Marker.h>
 
 #include <std_msgs/Float32MultiArray.h>
+#include <std_msgs/Float64.h>
 #include <math.h>
 #include <octomap/octomap.h>
 #include <octomap/OcTreeKey.h>
@@ -42,7 +43,7 @@
 
 using namespace std;
 
-ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub;
+ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub, combine_time_pub, detect_time_pub, avoid_time_pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -267,48 +268,66 @@ bool detect_collision (float degree_theta)
 
 void avoid_collision () 
 {
+  ros::Time start_avoid_time = ros::Time::now();
   int max_collision_angle = 90;
   int value_to_add = 5;
   bool willCollide = true;
   int counter = 0;
-  for (int degree = 0; degree <= max_collision_angle; degree = degree + value_to_add)
-  {
-      counter++;
-    if (detect_collision(degree))
-    {
-      //std::cout << "Collision detected" << std::endl;
-      draw_new_direction(-degree, 0.5, true);
-    }
-    else
-    {
-      //std::cout << "No collision" << std::endl;
-      draw_new_direction(-degree, 4.0, false);
-      willCollide = false;
-      break;
-    }
 
-    if (degree != 0)
-    {
-        if (detect_collision(-degree))
+
+  ros::Time start_detect_time = ros::Time::now();
+  willCollide = detect_collision(0);
+  std_msgs::Float64 detect_time;
+  detect_time.data = (ros::Time::now() - start_detect_time).toSec() * 1000;
+  detect_time_pub.publish(detect_time);
+
+  if (willCollide)
+  {
+      draw_new_direction(0, 0.5, true);
+      for (int degree = 5; degree <= max_collision_angle; degree = degree + value_to_add)
+      {
+          counter++;
+        if (detect_collision(degree))
         {
           //std::cout << "Collision detected" << std::endl;
-          draw_new_direction(-degree, 0.5, true);
+          //draw_new_direction(-degree, 0.5, true);
         }
         else
         {
           //std::cout << "No collision" << std::endl;
-          draw_new_direction(degree, 4.0, false);
+          //draw_new_direction(-degree, 4.0, false);
           willCollide = false;
           break;
         }
-    }
+
+        if (detect_collision(-degree))
+        {
+          //std::cout << "Collision detected" << std::endl;
+          //draw_new_direction(-degree, 0.5, true);
+        }
+        else
+        {
+          //std::cout << "No collision" << std::endl;
+          //draw_new_direction(degree, 4.0, false);
+          willCollide = false;
+          break;
+        }
+      }
+  }
+  else
+  {
+      //draw_new_direction(0, 4.0, false);
   }
   
   //std::cout << "Counter: " << counter;
   if (willCollide)
   {
-    draw_new_direction(0, 0.5, true);
+    //draw_new_direction(0, 0.5, true);
   }
+
+  std_msgs::Float64 avoid_time;
+  avoid_time.data = (ros::Time::now() - start_avoid_time).toSec() * 1000;
+  avoid_time_pub.publish(avoid_time);
 }
 
 void colorize ()
@@ -369,9 +388,13 @@ void pcl_combine ()
 
   sensor_msgs::PointCloud2 output;
 
+  ros::Time start_combine_time = ros::Time::now();
   output_pcl = output1_pcl;
   output_pcl += output2_pcl;
   output_pcl += output3_pcl;
+  std_msgs::Float64 combine_time;
+  combine_time.data = (ros::Time::now() - start_combine_time).toSec() * 1000;
+  combine_time_pub.publish(combine_time);
 
 //  octomap::OcTree tree = octomap::OcTree(0.05);
 //  octmap = &tree;
@@ -399,9 +422,9 @@ void pcl_combine ()
 
   colorize();
 
-  //avoid_collision();
+  avoid_collision();
 
-  detect_object();
+  //detect_object();
 
   bool publishBinaryMap = (m_latchedTopics || binary_map_pub.getNumSubscribers() > 0);
   if (publishBinaryMap)
@@ -521,7 +544,7 @@ void cloud_cb_cam3 (const sensor_msgs::PointCloud2ConstPtr& input)
 int main (int argc, char** argv)
 {
   // Initialize ROS
-  ros::init (argc, argv, "pc_combine");
+  ros::init (argc, argv, "safecopter");
   ros::NodeHandle nh;
 
   tf_listener = new tf::TransformListener();
@@ -536,6 +559,9 @@ int main (int argc, char** argv)
   new_direction_pub = nh.advertise<visualization_msgs::Marker>("new_direction", 1);
   vis_cube_pub = nh.advertise<visualization_msgs::Marker>("collision_box", 1);
   safecopter_pub = nh.advertise<std_msgs::Float32MultiArray>("safecopter",1);
+  combine_time_pub = nh.advertise<std_msgs::Float64>("/octree/combine_time", 1);
+  detect_time_pub = nh.advertise<std_msgs::Float64>("/octree/detect_time", 1);
+  avoid_time_pub = nh.advertise<std_msgs::Float64>("/octree/avoid_time", 1);
 
   m_latchedTopics = true;
   if (m_latchedTopics){
