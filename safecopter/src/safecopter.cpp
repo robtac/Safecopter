@@ -43,7 +43,7 @@
 
 using namespace std;
 
-ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub, combine_time_pub, detect_time_pub, avoid_time_pub, convert_time_pub;
+ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub, combine_time_pub, detect_time_pub, avoid_time_pub, convert_time_pub, total_time_pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -379,8 +379,7 @@ void colorize ()
 
 void pcl_combine ()
 {
-  ros::Time newTime;
-  ros::Time firstTime = ros::Time::now();
+  ros::Time start_total_time = ros::Time::now();
   
   cam1_data_valid = false;
   cam2_data_valid = false;
@@ -422,7 +421,7 @@ void pcl_combine ()
       octmap->updateNode(*it, true);
   }
   std_msgs::Float64 convert_time;
-  convert_time.data = (ros::Time::now() - start_combine_time).toSec() * 1000;
+  convert_time.data = (ros::Time::now() - start_convert_time).toSec() * 1000;
   convert_time_pub.publish(convert_time);
 
   colorize();
@@ -451,10 +450,9 @@ void pcl_combine ()
 
   pub.publish(output);
   
-  newTime = ros::Time::now();
-  std::cout << "Time to proces: " << (newTime - firstTime) << std::endl;
-  //std::cout << "Time since last point clould published: " << (newTime - oldTime) << std::endl;
-  oldTime = newTime;
+  std_msgs::Float64 total_time;
+  total_time.data = (ros::Time::now() - start_total_time).toSec() * 1000;
+  total_time_pub.publish(total_time);
 
   delete octmap;
 }
@@ -568,6 +566,7 @@ int main (int argc, char** argv)
   detect_time_pub = nh.advertise<std_msgs::Float64>("/octree/detect_time", 1);
   avoid_time_pub = nh.advertise<std_msgs::Float64>("/octree/avoid_time", 1);
   convert_time_pub = nh.advertise<std_msgs::Float64>("/octree/convert_time", 1);
+  total_time_pub = nh.advertise<std_msgs::Float64>("/octree/convert_time", 1);
 
   m_latchedTopics = true;
   if (m_latchedTopics){
