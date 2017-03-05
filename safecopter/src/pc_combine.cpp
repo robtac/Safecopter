@@ -26,7 +26,7 @@ bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
 float min_distance = 0.5;
-float collision_distance = 0.7;
+float collision_distance = 1.0;
 
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
 pcl::PointCloud<pcl::PointXYZRGB> output_pcl, output1_pcl, output2_pcl, output3_pcl;
