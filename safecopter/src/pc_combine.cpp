@@ -20,7 +20,7 @@
 
 using namespace std;
 
-ros::Publisher pub, new_direction_pub, combine_time_pub, detect_time_pub, avoid_time_pub;
+ros::Publisher pub, new_direction_pub, combine_time_pub, detect_time_pub, avoid_time_pub, total_time_pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -236,7 +236,7 @@ void colorize ()
 
 void pcl_combine ()
 {
-  ros::Time newTime;
+  ros::Time start_total_time = ros::Time::now();
   
   cam1_data_valid = false;
   cam2_data_valid = false;
@@ -258,9 +258,9 @@ void pcl_combine ()
 
   pub.publish(output);
   
-  newTime = ros::Time::now();
-  std::cout << "Time since last point clould published: " << (newTime - oldTime) << std::endl;
-  oldTime = newTime;
+  std_msgs::Float64 total_time;
+  total_time.data = (ros::Time::now() - start_total_time).toSec() * 1000;
+  total_time_pub.publish(total_time);
 }
 
 void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
@@ -365,6 +365,7 @@ int main (int argc, char** argv)
   combine_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/combine_time", 1);
   detect_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/detect_time", 1);
   avoid_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/avoid_time", 1);
+  total_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/total_time", 1);
   
   // Create a ROS publisher for the output point cloud
   pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
