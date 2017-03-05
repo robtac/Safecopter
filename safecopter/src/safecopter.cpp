@@ -566,7 +566,7 @@ int main (int argc, char** argv)
   detect_time_pub = nh.advertise<std_msgs::Float64>("/octree/detect_time", 1);
   avoid_time_pub = nh.advertise<std_msgs::Float64>("/octree/avoid_time", 1);
   convert_time_pub = nh.advertise<std_msgs::Float64>("/octree/convert_time", 1);
-  total_time_pub = nh.advertise<std_msgs::Float64>("/octree/convert_time", 1);
+  total_time_pub = nh.advertise<std_msgs::Float64>("/octree/total_time", 1);
 
   m_latchedTopics = true;
   if (m_latchedTopics){
