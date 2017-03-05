@@ -290,12 +290,12 @@ void avoid_collision ()
         if (detect_collision(degree))
         {
           //std::cout << "Collision detected" << std::endl;
-          //draw_new_direction(-degree, 0.5, true);
+          draw_new_direction(-degree, 0.5, true);
         }
         else
         {
           //std::cout << "No collision" << std::endl;
-          //draw_new_direction(-degree, 4.0, false);
+          draw_new_direction(-degree, 4.0, false);
           willCollide = false;
           break;
         }
@@ -303,12 +303,12 @@ void avoid_collision ()
         if (detect_collision(-degree))
         {
           //std::cout << "Collision detected" << std::endl;
-          //draw_new_direction(-degree, 0.5, true);
+          draw_new_direction(-degree, 0.5, true);
         }
         else
         {
           //std::cout << "No collision" << std::endl;
-          //draw_new_direction(degree, 4.0, false);
+          draw_new_direction(degree, 4.0, false);
           willCollide = false;
           break;
         }
@@ -316,13 +316,13 @@ void avoid_collision ()
   }
   else
   {
-      //draw_new_direction(0, 4.0, false);
+      draw_new_direction(0, 4.0, false);
   }
   
   //std::cout << "Counter: " << counter;
   if (willCollide)
   {
-    //draw_new_direction(0, 0.5, true);
+    draw_new_direction(0, 0.5, true);
   }
 
   std_msgs::Float64 avoid_time;
