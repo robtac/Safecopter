@@ -553,10 +553,13 @@ int main (int argc, char** argv)
   tf_listener = new tf::TransformListener();
 
   // Create a ROS subscriber for the input point cloud
-  ros::Subscriber sub = nh.subscribe ("/pf1/points", 1, cloud_cb_cam1);
+  /*ros::Subscriber sub = nh.subscribe ("/pf1/points", 1, cloud_cb_cam1);
   ros::Subscriber sub2 = nh.subscribe ("/pf2/points", 1, cloud_cb_cam2);
-  ros::Subscriber sub3 = nh.subscribe("/pf3/points", 1, cloud_cb_cam3);
-  
+  ros::Subscriber sub3 = nh.subscribe("/pf3/points", 1, cloud_cb_cam3);*/
+  ros::Subscriber sub = nh.subscribe ("/pf_FF_dephcam/points", 1, cloud_cb_cam1);
+  ros::Subscriber sub3 = nh.subscribe ("/pf_FR_dephcam/points", 1, cloud_cb_cam2);
+  ros::Subscriber sub2 = nh.subscribe ("/pf_FL_dephcam/points", 1, cloud_cb_cam3);
+
   // Create a ROS publisher for the output point cloud
   pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
   new_direction_pub = nh.advertise<visualization_msgs::Marker>("new_direction", 1);
