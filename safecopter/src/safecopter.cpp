@@ -28,8 +28,9 @@
 
 #include <visualization_msgs/Marker.h>
 
-#include <std_msgs/Float32MultiArray.h>
+#include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Bool.h>
 #include <math.h>
 #include <octomap/octomap.h>
 #include <octomap/OcTreeKey.h>
@@ -43,7 +44,7 @@
 
 using namespace std;
 
-ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub, combine_time_pub, detect_time_pub, avoid_time_pub, convert_time_pub, total_time_pub;
+ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub, combine_time_pub, detect_time_pub, avoid_time_pub, convert_time_pub, total_time_pub, will_collide_pub, can_find_path_pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -173,20 +174,22 @@ void drawCube(fcl::Vec3f vec, int c_color, fcl::Vec3f size, fcl::Matrix3f rotati
         vis_cube_pub.publish(marker);
 }
 
-void pub_safecopter_data (double isCollision, double collisionDirection) {
-    float freePathDirection = collisionDirection + 180;
-    std::cout << "Collision Direction: " << collisionDirection << " -- Free Path Direction: " << freePathDirection << std::endl;
-    std_msgs::Float32MultiArray array;
-    array.data.clear();
-    array.data.push_back(isCollision);
-    array.data.push_back(collisionDirection);
-    array.data.push_back(freePathDirection);
-    safecopter_pub.publish(array);
-    draw_new_direction(collisionDirection, 0.5, false);
+void pub_safecopter_data (bool isCollision, bool canFindPath, double direction) {
+    std_msgs::Float32 collisionDirection;
+    collisionDirection.data = direction;
+    safecopter_pub.publish(collisionDirection);
+
+    std_msgs::Bool willCollide;
+    willCollide.data = isCollision;
+    will_collide_pub.publish(willCollide);
+
+    std_msgs::Bool canFindPath_msg;
+    canFindPath_msg.data = canFindPath;
+    can_find_path_pub.publish(canFindPath_msg);
 }
 
 void detect_object () {
-    float willCollide = 0;
+    bool willCollide = false;
     int collidingPoints = 0;
     pcl::PointXYZRGB closestPoint = output_pcl.at(0);
     for (int i = 0; i < output_pcl.size(); i++)
@@ -206,7 +209,7 @@ void detect_object () {
                 collidingPoints++;
                 if (collidingPoints > 20)
                 {
-                  willCollide = 1;
+                  willCollide = true;
                 }
             }
           }
@@ -218,7 +221,7 @@ void detect_object () {
     }
     float theta = atan(closestPoint.x / closestPoint.y);
     float degreeTheta = theta * 180 / M_PI;
-    pub_safecopter_data(willCollide, degreeTheta);
+//    pub_safecopter_data(willCollide, degreeTheta);
 }
 
 bool detect_collision (float degree_theta)
@@ -290,26 +293,30 @@ void avoid_collision ()
         if (detect_collision(degree))
         {
           //std::cout << "Collision detected" << std::endl;
-          draw_new_direction(-degree, 0.5, true);
+//          draw_new_direction(-degree, 0.5, true);
         }
         else
         {
           //std::cout << "No collision" << std::endl;
           draw_new_direction(-degree, 4.0, false);
           willCollide = false;
+
+          pub_safecopter_data(true, true, -degree);
           break;
         }
 
         if (detect_collision(-degree))
         {
           //std::cout << "Collision detected" << std::endl;
-          draw_new_direction(-degree, 0.5, true);
+//          draw_new_direction(-degree, 0.5, true);
         }
         else
         {
           //std::cout << "No collision" << std::endl;
           draw_new_direction(degree, 4.0, false);
           willCollide = false;
+
+          pub_safecopter_data(true, true, degree);
           break;
         }
       }
@@ -317,12 +324,14 @@ void avoid_collision ()
   else
   {
       draw_new_direction(0, 4.0, false);
+      pub_safecopter_data(false, true, 0);
   }
   
   //std::cout << "Counter: " << counter;
   if (willCollide)
   {
     draw_new_direction(0, 0.5, true);
+    pub_safecopter_data(true, false, 0);
   }
 
   std_msgs::Float64 avoid_time;
@@ -564,7 +573,9 @@ int main (int argc, char** argv)
   pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
   new_direction_pub = nh.advertise<visualization_msgs::Marker>("new_direction", 1);
   vis_cube_pub = nh.advertise<visualization_msgs::Marker>("collision_box", 1);
-  safecopter_pub = nh.advertise<std_msgs::Float32MultiArray>("safecopter",1);
+  safecopter_pub = nh.advertise<std_msgs::Float32>("/safecopter/collision_free_angle", 1);
+  will_collide_pub = nh.advertise<std_msgs::Bool>("/safecopter/will_collide", 1);
+  can_find_path_pub = nh.advertise<std_msgs::Bool>("/safecopter/can_find_path", 1);
   combine_time_pub = nh.advertise<std_msgs::Float64>("/octree/combine_time", 1);
   detect_time_pub = nh.advertise<std_msgs::Float64>("/octree/detect_time", 1);
   avoid_time_pub = nh.advertise<std_msgs::Float64>("/octree/avoid_time", 1);

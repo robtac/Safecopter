@@ -70,7 +70,7 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
         rospy.Subscriber('vehicle_control_mode', vehicle_control_mode, self.vehicle_control_mode_callback)
         rospy.Subscriber("mavros/local_position/local", PoseStamped, self.position_callback)
         self.pub_spt = rospy.Publisher('mavros/setpoint_position/local', PoseStamped, queue_size=10)
-        self.rate = rospy.Rate(10) # 10hz
+        self.rate = rospy.Rate(10)  # 10hz
         self.has_pos = False
         self.local_position = PoseStamped()
         self.control_mode = vehicle_control_mode()
@@ -132,7 +132,7 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
 
             if self.is_at_position(pos.pose.position.x, pos.pose.position.y, pos.pose.position.z, 0.5):
                 break
-            count = count + 1
+            count += 1
             self.rate.sleep()
 
         self.assertTrue(count < timeout, "took too long to get to position")
@@ -169,4 +169,4 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
 if __name__ == '__main__':
     import rostest
     rostest.rosrun(PKG, 'mavros_offboard_posctl_test', MavrosOffboardPosctlTest)
-#unittest.main()
+    unittest.main()

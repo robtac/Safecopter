@@ -1,4 +1,5 @@
 <launch>
+<!-- vim: set ft=xml noet : -->
  
  <param name="robot_description" command="cat $(find safecopter)/urdf/safecopter.urdf" />
  
