@@ -49,8 +49,8 @@ bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
-float min_distance = 0.5f;
-float collision_distance = 1.5;
+float min_distance = 0.5;
+float collision_distance = 4;
 float resolution = 0.01;
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);

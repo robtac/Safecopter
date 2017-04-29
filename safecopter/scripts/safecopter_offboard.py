@@ -9,6 +9,7 @@ import time
 from numpy import linalg
 import numpy as np
 
+from visualization_msgs.msg import Marker
 from std_msgs.msg import Header, Float32, Bool
 from geometry_msgs.msg import PoseStamped, Quaternion
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
@@ -35,6 +36,7 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
         rospy.Subscriber("/safecopter/collision_free_angle", Float32, self.safecopter_direction_callback)
         rospy.Subscriber("/safecopter/can_find_path", Bool, self.can_find_path_callback)
         rospy.Subscriber("/safecopter/will_collide", Bool, self.will_collide_callback)
+        self.pub_location = rospy.Publisher("/safecopter/target_location", Marker, queue_size=100)
         self.pub_spt = rospy.Publisher('mavros/setpoint_position/local', PoseStamped, queue_size=10)
         rospy.wait_for_service('mavros/cmd/command', 30)
         self._srv_cmd_long = rospy.ServiceProxy('mavros/cmd/command', CommandLong, persistent=True)
@@ -72,11 +74,27 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
     #
     # Helper methods
     #
+    def pub_target_location(self, x, y):
+        marker = Marker()
+        marker.header.frame_id = "base_link"
+        marker.id = 15
+        marker.type = Marker.SPHERE
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
+        marker.color.a = 1.0
+        marker.pose.orientation.w = 1
+        marker.pose.position.x = x
+        marker.pose.position.y = y
+        marker.pose.position.z = 0
+
+        self.pub_location.publish(marker)
+
     def is_at_position(self, x, y, z, offset):
         rospy.logdebug("current position %f, %f, %f" %
                        (self.local_position.pose.position.x,
-                       self.local_position.pose.position.y,
-                       self.local_position.pose.position.z))
+                        self.local_position.pose.position.y,
+                        self.local_position.pose.position.z))
 
         desired = np.array((x, y, z))
         pos = np.array((self.local_position.pose.position.x,
@@ -102,16 +120,28 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
 
         angle_degrees = self.direction_from_collision
         angle_radians = math.radians(angle_degrees)
+        quaternion = (
+            self.local_position.pose.orientation.x,
+            self.local_position.pose.orientation.y,
+            self.local_position.pose.orientation.z,
+            self.local_position.pose.orientation.w)
+        euler = euler_from_quaternion(quaternion)
+        quad_yaw = euler[2]
+        angle_final = angle_radians + quad_yaw
 
-        delta_x = distance * math.sin(angle_radians)
+        delta_x = distance * math.sin(angle_final)
+        delta_y = distance * math.cos(angle_final)
+
         pos.pose.position.x = self.local_position.pose.position.x + delta_x
-
-        delta_y = distance * math.cos(angle_radians)
         pos.pose.position.y = self.local_position.pose.position.y + delta_y
 
         pos.pose.position.z = self.local_position.pose.position.z
 
         pos.pose.orientation = self.local_position.pose.orientation
+
+        print("X: " + str(pos.pose.position.x) + " - Y: " + str(pos.pose.position.y))
+
+        self.pub_target_location(delta_x, delta_y)
 
         return pos
 
@@ -140,7 +170,7 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
         turned_local_pos.header.frame_id = "base_footprint"
         turned_local_pos.pose.position.x = self.local_position.pose.position.x
         turned_local_pos.pose.position.y = self.local_position.pose.position.y
-        turned_local_pos.pose.position.z = 3
+        turned_local_pos.pose.position.z = 10
         turned_local_pos.pose.orientation = Quaternion(*quaternion)
 
         # does it reach the position in X seconds?
@@ -153,8 +183,8 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
                 if self.local_position.pose.position.z > 2.5:
                     if self.can_find_path:
                         if self.will_collide:
-                            print("Will collide: " + str(self.will_collide))
                             self.pub_spt.publish(self.get_temp_pos(1))
+                            # self.stop()
                         else:
                             self.pub_spt.publish(pos)
                         # else:
@@ -203,13 +233,13 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
         #     (2, 2, 2))
 
         positions = (
-            (0, 0, 3),
-            (5, 0, 3),
-            (0, 0, 3))
+            (0, 0, 10),
+            (10, 0, 10),
+            (0, 0, 10))
         print(positions)
 
         for i in range(0, len(positions)):
-            self.reach_position(positions[i][0], positions[i][1], positions[i][2], 180)
+            self.reach_position(positions[i][0], positions[i][1], positions[i][2], 1000)
 
 
 if __name__ == '__main__':
