@@ -1,10 +1,10 @@
 PKG = 'px4'
 
+import unittest
 import rospy
 import math
 import rosbag
 import time
-import tf
 
 from numpy import linalg
 import numpy as np
@@ -15,8 +15,9 @@ from geometry_msgs.msg import PoseStamped, Quaternion
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 from mavros_msgs.srv import CommandLong
 from sensor_msgs.msg import NavSatFix
+#from px4_test_helper import PX4TestHelper
 
-class MavrosOffboardPosctlTest():
+class MavrosOffboardPosctlTest(unittest.TestCase):
     """
     Tests flying a path in offboard control by sending position setpoints
     via MAVROS.
@@ -25,8 +26,10 @@ class MavrosOffboardPosctlTest():
     FIXME: add flight path assertion (needs transformation from ROS frame to NED)
     """
 
-    def __init__(self):
-        rospy.init_node('safecopter_offboard')
+    def setUp(self):
+        rospy.init_node('test_node', anonymous=True)
+        # self.helper = PX4TestHelper("mavros_offboard_posctl_test")
+        # self.helper.setUp()
 
         rospy.Subscriber("mavros/local_position/pose", PoseStamped, self.position_callback)
         rospy.Subscriber("mavros/global_position/global", NavSatFix, self.global_position_callback)
@@ -45,19 +48,16 @@ class MavrosOffboardPosctlTest():
         self.direction_from_collision = 0
         self.can_find_path = False
         self.will_collide = False
-        self.t = tf.TransformListener()
+
+    def tearDown(self):
+        #self.helper.tearDown()
+        pass
 
     #
     # General callback functions used in tests
     #
     def position_callback(self, data):
         self.local_position = data
-        br = tf.TransformBroadcaster()
-        br.sendTransform((data.pose.position.x, data.pose.position.y, 0),
-                         (data.pose.orientation.w, data.pose.orientation.x, data.pose.orientation.y, data.pose.orientation.z),
-                         rospy.Time.now(),
-                         "base_link",
-                         "odom")
 
     def global_position_callback(self, data):
         self.has_global_pos = True
@@ -113,58 +113,35 @@ class MavrosOffboardPosctlTest():
         current_yaw = euler[2]
         return abs(desired_yaw - current_yaw) < offset
 
-    def create_pose(self, x, y, z, roll, pitch, yaw, frame):
-        pose = PoseStamped()
-        pose.pose.position.x = x
-        pose.pose.position.y = y
-        pose.pose.position.z = z
-        quat = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
-        pose.pose.orientation.x = quat[0]
-        pose.pose.orientation.y = quat[1]
-        pose.pose.orientation.z = quat[2]
-        pose.pose.orientation.w = quat[3]
-        pose.header.frame_id = frame
-        pose.header.stamp = rospy.Time.now()
-        return pose
-
     def get_temp_pos(self, distance):
+        pos = PoseStamped()
+        pos.header = Header()
+        pos.header.frame_id = "base_footprint"
+
         angle_degrees = self.direction_from_collision
         angle_radians = math.radians(angle_degrees)
-        # quaternion = (
-        #     self.local_position.pose.orientation.x,
-        #     self.local_position.pose.orientation.y,
-        #     self.local_position.pose.orientation.z,
-        #     self.local_position.pose.orientation.w)
-        # euler = euler_from_quaternion(quaternion)
-        # quad_yaw = euler[2]
-        # angle_final = angle_radians + quad_yaw
-        x = distance * math.cos(angle_radians)
-        y = distance * math.sin(angle_radians)
-        z = 0
+        quaternion = (
+            self.local_position.pose.orientation.x,
+            self.local_position.pose.orientation.y,
+            self.local_position.pose.orientation.z,
+            self.local_position.pose.orientation.w)
+        euler = euler_from_quaternion(quaternion)
+        quad_yaw = euler[2]
+        angle_final = angle_radians + quad_yaw
 
-        print("X: " + str(x) + " - Y: " + str(y))
+        delta_x = distance * math.cos(angle_final)
+        delta_y = distance * math.sin(angle_final)
 
-        base_pos = self.create_pose(x, y, z, 0, 0, 0, "base_link")
+        pos.pose.position.x = self.local_position.pose.position.x + delta_x
+        pos.pose.position.y = self.local_position.pose.position.y + delta_y
 
-        tf_listener = tf.TransformListener()
-        pos = base_pos
-        try:
-            ros_time = rospy.Time.now()
-            tf_listener.waitForTransform("odom", "base_link", ros_time, rospy.Duration(4.0))
-            pos = self.t.transformPose("odom", base_pos)
-        except tf.Exception:
-            pass
+        pos.pose.position.z = self.local_position.pose.position.z
 
-        x_difference = pos.pose.position.x - self.local_position.pose.position.x
-        y_difference = pos.pose.position.y - self.local_position.pose.position.y
-        yaw = 0
-        if y_difference != 0:
-            if x_difference < 0:
-                yaw = math.atan2(y_difference, x_difference)
-            else:
-                yaw = math.atan2(y_difference, x_difference)
-        quat = quaternion_from_euler(0, 0, yaw)
-        pos.pose.orientation = Quaternion(*quat)
+        pos.pose.orientation = self.local_position.pose.orientation
+
+        print("X: " + str(pos.pose.position.x) + " - Y: " + str(pos.pose.position.y))
+
+        self.pub_target_location(delta_x, delta_y)
 
         return pos
 
@@ -209,13 +186,19 @@ class MavrosOffboardPosctlTest():
                             self.pub_spt.publish(self.get_temp_pos(1))
                             # self.stop()
                         else:
-                            # FIXME: safe mode for when no path is found
                             self.pub_spt.publish(pos)
+                        # else:
+                            # FIXME: safe mode for when no path is found
+                            # break
                 else:
                     self.pub_spt.publish(pos)
             else:
                 self.pub_spt.publish(turned_local_pos)
 
+            #self.helper.bag_write('mavros/setpoint_position/local', pos)
+
+            # FIXME: arm and switch to offboard
+            # (need to wait the first few rounds until PX4 has the offboard stream)
             if not self.armed and count > 5:
                 self._srv_cmd_long(False, 176, False,
                                    1, 6, 0, 0, 0, 0, 0)
@@ -233,7 +216,12 @@ class MavrosOffboardPosctlTest():
             count += 1
             self.rate.sleep()
 
+        self.assertTrue(count < timeout, "took too long to get to position")
+
     def test_posctl(self):
+        """Test offboard position control"""
+
+        # FIXME: hack to wait for simulation to be ready
         while not self.has_global_pos:
             self.rate.sleep()
 
@@ -255,8 +243,6 @@ class MavrosOffboardPosctlTest():
 
 
 if __name__ == '__main__':
-    try:
-        obj = MavrosOffboardPosctlTest()
-        obj.test_posctl()
-    except rospy.ROSException:
-        pass
+    import rostest
+    rostest.rosrun(PKG, 'mavros_offboard_posctl_test', MavrosOffboardPosctlTest)
+    #unittest.main()
