@@ -49,9 +49,11 @@ bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
-float min_distance = 0.5;
-float collision_distance = 4;
+float min_distance;
+float collision_distance = 0;
 float resolution = 0.01;
+float quadWidth;
+float quadHeight;
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
@@ -226,8 +228,6 @@ void detect_object () {
 
 bool detect_collision (float degree_theta)
 {
-  float quadWidth = 0.8;
-  float quadHeight = 0.4;
   bool willCollide = false;
   float theta = (M_PI / 180) * -degree_theta;
   //fcl::Matrix3f rotation_mat = fcl::Matrix3f(1, 0, 0, 0, cos(theta), -sin(theta), 0, sin(theta), cos(theta)); // X rotation
@@ -557,7 +557,13 @@ int main (int argc, char** argv)
 {
   // Initialize ROS
   ros::init (argc, argv, "safecopter");
-  ros::NodeHandle nh;
+  ros::NodeHandle nh ("safecopter");
+
+  // Define the parameters
+  nh.param("min_distance", min_distance, float(0.5));
+  nh.param("collision_distance", collision_distance, float(4.0));
+  nh.param("quad_width", quadWidth, float(0.8));
+  nh.param("quad_height", quadHeight, float(0.4));
 
   tf_listener = new tf::TransformListener();
 
@@ -573,9 +579,9 @@ int main (int argc, char** argv)
   pub = nh.advertise<sensor_msgs::PointCloud2> ("cloud_in", 1);
   new_direction_pub = nh.advertise<visualization_msgs::Marker>("new_direction", 1);
   vis_cube_pub = nh.advertise<visualization_msgs::Marker>("collision_box", 1);
-  safecopter_pub = nh.advertise<std_msgs::Float32>("/safecopter/collision_free_angle", 1);
-  will_collide_pub = nh.advertise<std_msgs::Bool>("/safecopter/will_collide", 1);
-  can_find_path_pub = nh.advertise<std_msgs::Bool>("/safecopter/can_find_path", 1);
+  safecopter_pub = nh.advertise<std_msgs::Float32>("collision_free_angle", 1);
+  will_collide_pub = nh.advertise<std_msgs::Bool>("will_collide", 1);
+  can_find_path_pub = nh.advertise<std_msgs::Bool>("can_find_path", 1);
   combine_time_pub = nh.advertise<std_msgs::Float64>("/octree/combine_time", 1);
   detect_time_pub = nh.advertise<std_msgs::Float64>("/octree/detect_time", 1);
   avoid_time_pub = nh.advertise<std_msgs::Float64>("/octree/avoid_time", 1);
@@ -590,5 +596,6 @@ int main (int argc, char** argv)
   binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 1, m_latchedTopics);
   //binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 1);
   // Spin
+  ROS_INFO_STREAM("Collision distance: " << collision_distance);
   ros::spin ();
 }
