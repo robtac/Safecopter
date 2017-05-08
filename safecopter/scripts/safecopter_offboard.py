@@ -46,28 +46,30 @@ class MavrosOffboardPosctlTest():
         self.direction_from_collision = 0
         self.can_find_path = False
         self.will_collide = False
-        #self.t = tf2_ros.TransformListener()
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tfBuffer)
 
     #
     # General callback functions used in tests
     #
     def position_callback(self, data):
         self.local_position = data
-        br = tf2_ros.TransformBroadcaster()
-        t = TransformStamped()
-
-        t.header.stamp = rospy.Time.now()
-        t.header.frame_id = "odom"
-        t.child_frame_id = "base_link"
-        t.transform.translation.x = data.pose.position.x
-        t.transform.translation.y = data.pose.position.y
-        t.transform.translation.z = data.pose.position.z
-        t.transform.rotation.x = data.pose.orientation.x
-        t.transform.rotation.y = data.pose.orientation.y
-        t.transform.rotation.z = data.pose.orientation.z
-        t.transform.rotation.w = data.pose.orientation.w
-
-        br.sendTransform(t)
+        # br = tf2_ros.TransformBroadcaster()
+        # t = TransformStamped()
+        #
+        # t.header.stamp = rospy.Time.now()
+        # t.header.frame_id = "odom"
+        # t.child_frame_id = "base_link"
+        # t.transform.translation.x = data.pose.position.x
+        # t.transform.translation.y = data.pose.position.y
+        # t.transform.translation.z = data.pose.position.z
+        # t.transform.rotation.w = data.pose.orientation.w
+        # t.transform.rotation.x = data.pose.orientation.x
+        # t.transform.rotation.y = data.pose.orientation.y
+        # t.transform.rotation.z = data.pose.orientation.z
+        #
+        # br.sendTransform(t)
+        self.pub_position_tf()
         # br.sendTransform((data.pose.position.x, data.pose.position.y, 0),
         #                  (data.pose.orientation.w, data.pose.orientation.x, data.pose.orientation.y, data.pose.orientation.z),
         #                  rospy.Time.now(),
@@ -89,6 +91,23 @@ class MavrosOffboardPosctlTest():
     #
     # Helper methods
     #
+    def pub_position_tf(self):
+        br = tf2_ros.TransformBroadcaster()
+        t = TransformStamped()
+
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = "odom"
+        t.child_frame_id = "base_link"
+        t.transform.translation.x = self.local_position.pose.position.x
+        t.transform.translation.y = self.local_position.pose.position.y
+        t.transform.translation.z = self.local_position.pose.position.z
+        t.transform.rotation.w = self.local_position.pose.orientation.w
+        t.transform.rotation.x = self.local_position.pose.orientation.x
+        t.transform.rotation.y = self.local_position.pose.orientation.y
+        t.transform.rotation.z = self.local_position.pose.orientation.z
+
+        br.sendTransform(t)
+
     def pub_target_location(self, x, y):
         marker = Marker()
         marker.header.frame_id = "base_link"
@@ -145,14 +164,6 @@ class MavrosOffboardPosctlTest():
     def get_temp_pos(self, distance):
         angle_degrees = self.direction_from_collision
         angle_radians = math.radians(angle_degrees)
-        # quaternion = (
-        #     self.local_position.pose.orientation.x,
-        #     self.local_position.pose.orientation.y,
-        #     self.local_position.pose.orientation.z,
-        #     self.local_position.pose.orientation.w)
-        # euler = euler_from_quaternion(quaternion)
-        # quad_yaw = euler[2]
-        # angle_final = angle_radians + quad_yaw
         x = distance * math.cos(angle_radians)
         y = distance * math.sin(angle_radians)
         z = 0
@@ -161,30 +172,18 @@ class MavrosOffboardPosctlTest():
 
         base_pos = self.create_pose(x, y, z, 0, 0, 0, "base_link")
 
-        tfBuffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tfBuffer)
         pos = base_pos
-        # try:
-        trans = tfBuffer.lookup_transform("odom", "base_link", rospy.Time())
-        pos = tf2_geometry_msgs.do_transform_pose(pos, trans)
-
-            # ros_time = rospy.Time.now()
-            # tf_listener.waitForTransform("odom", "base_link", ros_time, rospy.Duration(4.0))
-            # pos = self.t.transformPose("odom", base_pos)
-        # except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-        #     print("Lookup Transformation Error")
-
-        #x_difference = pos.pose.position.x - self.local_position.pose.position.x
-        #y_difference = pos.pose.position.y - self.local_position.pose.position.y
-        #yaw = 0
-        #if y_difference != 0:
-        #    if x_difference < 0:
-        #        yaw = math.atan2(y_difference, x_difference)
-        #    else:
-        #        yaw = math.atan2(y_difference, x_difference)
-        #quat = quaternion_from_euler(0, 0, yaw)
-        #pos.pose.orientation = Quaternion(*quat)
-
+        try:
+            trans = self.tfBuffer.lookup_transform("odom", "base_link", rospy.Time(0))
+            pos = tf2_geometry_msgs.do_transform_pose(pos, trans)
+            self.pub_target_location(x, y)
+            print("Yes")
+        except tf2_ros.LookupException as e:
+            rospy.loginfo("Handling Lookup error: %s", e)
+        except f2_ros.ConnectivityException as e:
+            rospy.loginfo("Handling run-time error: %s", e)
+        except tf2_ros.ExtrapolationException as e:
+            rospy.loginfo("Handling run-time error: %s", e)
         return pos
 
     def reach_position(self, x, y, z, timeout):
