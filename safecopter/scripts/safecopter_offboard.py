@@ -48,33 +48,14 @@ class MavrosOffboardPosctlTest():
         self.will_collide = False
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
+        self.height = 3
 
     #
     # General callback functions used in tests
     #
     def position_callback(self, data):
         self.local_position = data
-        # br = tf2_ros.TransformBroadcaster()
-        # t = TransformStamped()
-        #
-        # t.header.stamp = rospy.Time.now()
-        # t.header.frame_id = "odom"
-        # t.child_frame_id = "base_link"
-        # t.transform.translation.x = data.pose.position.x
-        # t.transform.translation.y = data.pose.position.y
-        # t.transform.translation.z = data.pose.position.z
-        # t.transform.rotation.w = data.pose.orientation.w
-        # t.transform.rotation.x = data.pose.orientation.x
-        # t.transform.rotation.y = data.pose.orientation.y
-        # t.transform.rotation.z = data.pose.orientation.z
-        #
-        # br.sendTransform(t)
         self.pub_position_tf()
-        # br.sendTransform((data.pose.position.x, data.pose.position.y, 0),
-        #                  (data.pose.orientation.w, data.pose.orientation.x, data.pose.orientation.y, data.pose.orientation.z),
-        #                  rospy.Time.now(),
-        #                  "base_link",
-        #                  "odom")
 
     def global_position_callback(self, data):
         self.has_global_pos = True
@@ -121,7 +102,7 @@ class MavrosOffboardPosctlTest():
         marker.pose.position.x = x
         marker.pose.position.y = y
         marker.pose.position.z = 0
-
+        marker.lifetime = rospy.Duration(1)
         self.pub_location.publish(marker)
 
     def is_at_position(self, x, y, z, offset):
@@ -180,10 +161,11 @@ class MavrosOffboardPosctlTest():
             print("Yes")
         except tf2_ros.LookupException as e:
             rospy.loginfo("Handling Lookup error: %s", e)
-        except f2_ros.ConnectivityException as e:
+        except tf2_ros.ConnectivityException as e:
             rospy.loginfo("Handling run-time error: %s", e)
         except tf2_ros.ExtrapolationException as e:
             rospy.loginfo("Handling run-time error: %s", e)
+        pos.pose.position.z = self.height
         return pos
 
     def reach_position(self, x, y, z, timeout):
@@ -211,7 +193,7 @@ class MavrosOffboardPosctlTest():
         turned_local_pos.header.frame_id = "base_footprint"
         turned_local_pos.pose.position.x = self.local_position.pose.position.x
         turned_local_pos.pose.position.y = self.local_position.pose.position.y
-        turned_local_pos.pose.position.z = 10
+        turned_local_pos.pose.position.z = self.height
         turned_local_pos.pose.orientation = Quaternion(*quaternion)
 
         # does it reach the position in X seconds?
@@ -221,16 +203,13 @@ class MavrosOffboardPosctlTest():
             pos.header.stamp = rospy.Time.now()
             if self.is_at_yaw(yaw, 10):
                 print("Can find path: " + str(self.can_find_path) + " -- Will collide: " + str(self.will_collide))
-                if self.local_position.pose.position.z > 2.5:
-                    if self.can_find_path:
-                        if self.will_collide:
-                            self.pub_spt.publish(self.get_temp_pos(1))
-                            # self.stop()
-                        else:
-                            # FIXME: safe mode for when no path is found
-                            self.pub_spt.publish(pos)
-                else:
-                    self.pub_spt.publish(pos)
+                if self.can_find_path:
+                    if self.will_collide:
+                        self.pub_spt.publish(self.get_temp_pos(2))
+                        # self.stop()
+                    else:
+                        # FIXME: safe mode for when no path is found
+                        self.pub_spt.publish(pos)
             else:
                 self.pub_spt.publish(turned_local_pos)
 
@@ -263,9 +242,9 @@ class MavrosOffboardPosctlTest():
         #     (2, 2, 2))
 
         positions = (
-            (0, 0, 10),
-            (10, 0, 10),
-            (0, 0, 10))
+            (0, 0, self.height),
+            (10, 0, self.height),
+            (0, 0, self.height))
         print(positions)
 
         for i in range(0, len(positions)):
