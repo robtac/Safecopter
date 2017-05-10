@@ -49,11 +49,14 @@ bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
-float min_distance;
-float collision_distance = 0;
 float resolution = 0.01;
-float quadWidth;
-float quadHeight;
+
+// Parameters
+float m_min_distance;               float default_min_distance = 0.5;
+float m_collision_distance;      float default_collision_distance = 4.0;
+float m_quad_width;                 float default_quad_width = 0.8;
+float m_quad_height;                float default_quad_height = 0.4;
+bool m_filter_ground;               bool default_filter_ground = true;
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
@@ -70,6 +73,53 @@ tf::TransformListener *tf_listener;
 ros::Time oldTime;
 
 bool m_latchedTopics;
+
+void print_param_changes () {
+    if (m_min_distance != default_min_distance)
+    {
+        ROS_INFO_STREAM("Changed min_distance from " << default_min_distance << " to " << m_min_distance);
+    }
+    else
+    {
+        ROS_INFO_STREAM("min_distance at default " << default_min_distance);
+    }
+
+    if (m_collision_distance != default_collision_distance)
+    {
+        ROS_INFO_STREAM("Changed collision_distance from " << default_collision_distance << " to " << m_collision_distance);
+    }
+    else
+    {
+        ROS_INFO_STREAM("collision_distance at default " << default_collision_distance);
+    }
+
+    if (m_quad_width != default_quad_width)
+    {
+        ROS_INFO_STREAM("Changed quad_width from " << default_quad_width << " to " << m_quad_width);
+    }
+    else
+    {
+        ROS_INFO_STREAM("quad_width at default " << default_quad_width);
+    }
+
+    if (m_quad_height != default_quad_height)
+    {
+        ROS_INFO_STREAM("Changed quad_height from " << default_quad_height << " to " << m_quad_height);
+    }
+    else
+    {
+        ROS_INFO_STREAM("quad_height at default " << default_quad_height);
+    }
+
+    if (m_filter_ground != default_filter_ground)
+    {
+        ROS_INFO_STREAM("Changed filter_ground from " << default_filter_ground << " to " << m_filter_ground);
+    }
+    else
+    {
+        ROS_INFO_STREAM("filter_ground at default " << default_filter_ground);
+    }
+}
 
 void draw_new_direction (float rotation, float distance, bool willCollide)
 {
@@ -206,7 +256,7 @@ void detect_object () {
                 closestPoint = point;
             }
 
-            if (distance > min_distance && distance < collision_distance)
+            if (distance > m_min_distance && distance < m_collision_distance)
             {
                 collidingPoints++;
                 if (collidingPoints > 20)
@@ -234,14 +284,14 @@ bool detect_collision (float degree_theta)
   //fcl::Matrix3f rotation_mat = fcl::Matrix3f(cos(theta), 0, sin(theta), 0, 1, 0, -sin(theta), 0, cos(theta)); // Y rotation
   fcl::Matrix3f rotation_mat = fcl::Matrix3f(cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0, 0, 0, 1); // Z rotation
 
-  fcl::Vec3f size = fcl::Vec3f(collision_distance, quadWidth, quadHeight);
+  fcl::Vec3f size = fcl::Vec3f(m_collision_distance, m_quad_width, m_quad_height);
   fcl::Box *box = new fcl::Box(size[0], size[1], size[2]);
   box->cost_density = 100;
   box->threshold_occupied = 5;
 
   fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octmap));
 
-  fcl::Vec3f box_center = fcl::Vec3f(collision_distance / 2 + min_distance, 0, 0);
+  fcl::Vec3f box_center = fcl::Vec3f(m_collision_distance / 2 + m_min_distance, 0, 0);
   fcl::Vec3f translation_vec = fcl::Vec3f((box_center[0] * cos(theta) - box_center[1] * sin(theta)), (box_center[1] * cos(theta) + box_center[0] * sin(theta)), box_center[2]);
   fcl::Transform3f transformation = fcl::Transform3f(rotation_mat, translation_vec);
   collision_box = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(box), transformation);
@@ -341,8 +391,6 @@ void avoid_collision ()
 
 void colorize ()
 {
-  float quadWidth = 0.8;
-  float quadHeight = 0.4;
   bool willCollide = false;
   int collidingPoints = 0;
   for (int i = 0; i < output_pcl.size(); i++)
@@ -350,7 +398,7 @@ void colorize ()
     pcl::PointXYZRGB point = output_pcl.at(i);
     double distance = sqrt((point.x * point.x) + (point.y * point.y) + (point.z * point.z));
     if (distance > 0 || distance < 0 || distance == 0) { // null test
-      if (point.y < quadWidth / 2 && point.y > -quadWidth / 2 && distance < collision_distance && point.z < quadHeight / 2 && point.z > -quadHeight / 2 && distance > min_distance)
+      if (point.y < m_quad_width / 2 && point.y > -m_quad_width / 2 && distance < m_collision_distance && point.z < m_quad_height / 2 && point.z > -m_quad_height / 2 && distance > m_min_distance)
       {
         point.r = 255;
         point.g = 255;
@@ -362,16 +410,16 @@ void colorize ()
           willCollide = true;
         }
       }
-      else if (distance < min_distance)
+      else if (distance < m_min_distance)
       {
 
       }
-      else if (distance < collision_distance)
+      else if (distance < m_collision_distance)
       {
         point.r = 255;
         output_pcl.at(i) = point;
       }
-      else if (distance < 2 * collision_distance)
+      else if (distance < 2 * m_collision_distance)
       {
         point.r = 255;
         point.g = 255;
@@ -438,6 +486,10 @@ void pcl_combine ()
   avoid_collision();
 
   //detect_object();
+
+  if (m_filter_ground) {
+//      filterGroundPlane();
+  }
 
   bool publishBinaryMap = (m_latchedTopics || binary_map_pub.getNumSubscribers() > 0);
   if (publishBinaryMap)
@@ -559,11 +611,13 @@ int main (int argc, char** argv)
   ros::init (argc, argv, "safecopter");
   ros::NodeHandle nh ("safecopter");
 
-  // Define the parameters
-  nh.param("min_distance", min_distance, float(0.5));
-  nh.param("collision_distance", collision_distance, float(4.0));
-  nh.param("quad_width", quadWidth, float(0.8));
-  nh.param("quad_height", quadHeight, float(0.4));
+  // Define parameters
+  nh.param("min_distance", m_min_distance, default_min_distance);
+  nh.param("collision_distance", m_collision_distance, default_collision_distance);
+  nh.param("quad_width", m_quad_width, default_quad_width);
+  nh.param("quad_height", m_quad_height, default_quad_height);
+  nh.param("filter_ground", m_filter_ground, default_filter_ground);
+  print_param_changes();
 
   tf_listener = new tf::TransformListener();
 
@@ -589,13 +643,15 @@ int main (int argc, char** argv)
   total_time_pub = nh.advertise<std_msgs::Float64>("/octree/total_time", 1);
 
   m_latchedTopics = true;
-  if (m_latchedTopics){
+  if (m_latchedTopics)
+  {
     ROS_INFO("Publishing latched (single publish will take longer, all topics are prepared)");
   } else
+  {
     ROS_INFO("Publishing non-latched (topics are only prepared as needed, will only be re-published on map change");
+  }
   binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 1, m_latchedTopics);
-  //binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 1);
+
   // Spin
-  ROS_INFO_STREAM("Collision distance: " << collision_distance);
   ros::spin ();
 }
