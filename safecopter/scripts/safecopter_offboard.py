@@ -158,7 +158,6 @@ class MavrosOffboardPosctlTest():
             trans = self.tfBuffer.lookup_transform("odom", "base_link", rospy.Time(0))
             pos = tf2_geometry_msgs.do_transform_pose(pos, trans)
             self.pub_target_location(x, y)
-            print("Yes")
         except tf2_ros.LookupException as e:
             rospy.loginfo("Handling Lookup error: %s", e)
         except tf2_ros.ConnectivityException as e:

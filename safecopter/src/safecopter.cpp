@@ -12,6 +12,7 @@
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/filters/passthrough.h>
 
 // FCL Includes
 #include "fcl/config.h"
@@ -56,6 +57,7 @@ float m_min_distance;               float default_min_distance = 0.5;
 float m_collision_distance;      float default_collision_distance = 4.0;
 float m_quad_width;                 float default_quad_width = 0.8;
 float m_quad_height;                float default_quad_height = 0.4;
+float m_ground_minimum;     float default_ground_minimum = 0.5;
 bool m_filter_ground;               bool default_filter_ground = true;
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
@@ -109,6 +111,15 @@ void print_param_changes () {
     else
     {
         ROS_INFO_STREAM("quad_height at default " << default_quad_height);
+    }
+
+    if (m_ground_minimum != default_ground_minimum)
+    {
+        ROS_INFO_STREAM("Changed ground_minimum from " << default_ground_minimum << " to " << m_ground_minimum);
+    }
+    else
+    {
+        ROS_INFO_STREAM("ground_minimum at default " << default_ground_minimum);
     }
 
     if (m_filter_ground != default_filter_ground)
@@ -434,6 +445,53 @@ void colorize ()
   }
 }
 
+void filter_ground ()
+{
+    bool valid_tf = false;
+    tf::StampedTransform transform;
+    try
+    {
+        tf_listener->lookupTransform("odom", base_link_id, ros::Time(0), transform);
+        valid_tf = true;
+    }
+    catch (tf::TransformException e)
+    {
+        ROS_ERROR_STREAM("Transform to odom failed " << e.what());
+    }
+
+    if (valid_tf)
+    {
+        /*pcl_ros::transformPointCloud (output_pcl, output_pcl, transform);
+        int j = 0;
+        for (pcl::PointCloud<pcl::PointXYZRGB>::iterator i = output_pcl.begin(); i != output_pcl.end(); i++)
+//        for (int i = 0; i < output_pcl.size(); i++)
+        {
+            j++;
+            ROS_INFO_STREAM("At point " << j << "  Z: " << i->z);
+            if(i->z < m_ground_minimum)
+            {
+                output_pcl.erase(i, i);
+            }
+        }
+
+        try
+        {
+            tf_listener->lookupTransform(base_link_id, "odom", ros::Time(0), transform);
+            pcl_ros::transformPointCloud (output_pcl, output_pcl, transform);
+        }
+        catch (tf::TransformException e)
+        {
+            ROS_ERROR_STREAM("Transform back to " << base_link_id << "failed " << e.what());
+        }*/
+
+        pcl::PassThrough<pcl::PointXYZRGB> z_filter;
+        z_filter.setFilterFieldName("z");
+        z_filter.setFilterLimits(-5, m_ground_minimum);
+        z_filter.setInputCloud(output_pcl.makeShared());
+        z_filter.filter(output_pcl);
+    }
+}
+
 void pcl_combine ()
 {
   ros::Time start_total_time = ros::Time::now();
@@ -488,7 +546,7 @@ void pcl_combine ()
   //detect_object();
 
   if (m_filter_ground) {
-//      filterGroundPlane();
+      filter_ground();
   }
 
   bool publishBinaryMap = (m_latchedTopics || binary_map_pub.getNumSubscribers() > 0);
@@ -616,6 +674,7 @@ int main (int argc, char** argv)
   nh.param("collision_distance", m_collision_distance, default_collision_distance);
   nh.param("quad_width", m_quad_width, default_quad_width);
   nh.param("quad_height", m_quad_height, default_quad_height);
+  nh.param("ground_minimum", m_ground_minimum, default_ground_minimum);
   nh.param("filter_ground", m_filter_ground, default_filter_ground);
   print_param_changes();
 
