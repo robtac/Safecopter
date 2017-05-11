@@ -45,7 +45,7 @@
 
 using namespace std;
 
-ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub, combine_time_pub, detect_time_pub, avoid_time_pub, convert_time_pub, total_time_pub, will_collide_pub, can_find_path_pub;
+ros::Publisher pub, new_direction_pub, vis_cube_pub, binary_map_pub, safecopter_pub, combine_time_pub, detect_time_pub, avoid_time_pub, convert_time_pub, ground_time_pub, total_time_pub, will_collide_pub, can_find_path_pub;
 bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
@@ -447,6 +447,8 @@ void colorize ()
 
 void filter_ground ()
 {
+    ros::Time start_total_time = ros::Time::now();
+
     bool valid_tf = false;
     tf::StampedTransform transform;
     try
@@ -461,18 +463,34 @@ void filter_ground ()
 
     if (valid_tf)
     {
-        /*pcl_ros::transformPointCloud (output_pcl, output_pcl, transform);
-        int j = 0;
-        for (pcl::PointCloud<pcl::PointXYZRGB>::iterator i = output_pcl.begin(); i != output_pcl.end(); i++)
+        ROS_INFO_STREAM("Points before: " << output_pcl.size());
+        pcl_ros::transformPointCloud (output_pcl, output_pcl, transform);
+
+        pcl::PassThrough<pcl::PointXYZRGB> z_filter;
+        z_filter.setFilterFieldName("z");
+        z_filter.setFilterLimits(m_ground_minimum, 10);
+        z_filter.setInputCloud(output_pcl.makeShared());
+        z_filter.filter(output_pcl);
+        ROS_INFO_STREAM("Points after: " << output_pcl.size());
+
+//        pcl_ros::transformPointCloud (output_pcl, output_pcl, transform);
+//        pcl::PointCloud<pcl::PointXYZRGB> temp_pc;
+//        temp_pc.header.frame_id = base_link_id;
+//        int j = 0;
 //        for (int i = 0; i < output_pcl.size(); i++)
-        {
-            j++;
-            ROS_INFO_STREAM("At point " << j << "  Z: " << i->z);
-            if(i->z < m_ground_minimum)
-            {
-                output_pcl.erase(i, i);
-            }
-        }
+//        {
+//            pcl::PointXYZRGB point = output_pcl.at(i);
+//            if (point.z > 0 || point.z < 0 || point.z == 0) // null test
+//             {
+//                    if (point.z > m_ground_minimum)
+//                    {
+//                        j++;
+//                        temp_pc.push_back(point);
+//                    }
+//             }
+//        }
+//        ROS_INFO_STREAM("Points: " << j);
+//        output_pcl = temp_pc;
 
         try
         {
@@ -482,14 +500,12 @@ void filter_ground ()
         catch (tf::TransformException e)
         {
             ROS_ERROR_STREAM("Transform back to " << base_link_id << "failed " << e.what());
-        }*/
-
-        pcl::PassThrough<pcl::PointXYZRGB> z_filter;
-        z_filter.setFilterFieldName("z");
-        z_filter.setFilterLimits(-5, m_ground_minimum);
-        z_filter.setInputCloud(output_pcl.makeShared());
-        z_filter.filter(output_pcl);
+        }
     }
+
+    std_msgs::Float64 total_time;
+    total_time.data = (ros::Time::now() - start_total_time).toSec() * 1000;
+    ground_time_pub.publish(total_time);
 }
 
 void pcl_combine ()
@@ -509,6 +525,10 @@ void pcl_combine ()
   std_msgs::Float64 combine_time;
   combine_time.data = (ros::Time::now() - start_combine_time).toSec() * 1000;
   combine_time_pub.publish(combine_time);
+
+  if (m_filter_ground) {
+      filter_ground();
+  }
 
 //  octomap::OcTree tree = octomap::OcTree(0.05);
 //  octmap = &tree;
@@ -545,10 +565,6 @@ void pcl_combine ()
 
   //detect_object();
 
-  if (m_filter_ground) {
-      filter_ground();
-  }
-
   bool publishBinaryMap = (m_latchedTopics || binary_map_pub.getNumSubscribers() > 0);
   if (publishBinaryMap)
   {
@@ -580,7 +596,7 @@ void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam1_data_valid)
   {
-    std::cout << "Cam 1; ";
+//    std::cout << "Cam 1; ";
     cam1_data_valid = true;
     
     pcl::fromROSMsg(*input, input1_pcl);
@@ -609,7 +625,7 @@ void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam2_data_valid)
   {
-    std::cout << "Cam 2; ";
+//    std::cout << "Cam 2; ";
     cam2_data_valid = true;
 
     pcl::fromROSMsg(*input, input2_pcl);
@@ -638,7 +654,7 @@ void cloud_cb_cam3 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam3_data_valid)
   {
-    std::cout << "Cam 3; ";
+//    std::cout << "Cam 3; ";
     cam3_data_valid = true;
 
     pcl::fromROSMsg(*input, input3_pcl);
@@ -699,6 +715,7 @@ int main (int argc, char** argv)
   detect_time_pub = nh.advertise<std_msgs::Float64>("/octree/detect_time", 1);
   avoid_time_pub = nh.advertise<std_msgs::Float64>("/octree/avoid_time", 1);
   convert_time_pub = nh.advertise<std_msgs::Float64>("/octree/convert_time", 1);
+  ground_time_pub = nh.advertise<std_msgs::Float64>("/octree/ground_filter_time", 1);
   total_time_pub = nh.advertise<std_msgs::Float64>("/octree/total_time", 1);
 
   m_latchedTopics = true;
