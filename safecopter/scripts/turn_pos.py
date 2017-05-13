@@ -72,6 +72,30 @@ class MavrosOffboardPosctlTest():
     #
     # Helper methods
     #
+    def print_pos(self, s, pos):
+        target_quaternion = (
+            pos.pose.orientation.x,
+            pos.pose.orientation.y,
+            pos.pose.orientation.z,
+            pos.pose.orientation.w)
+        target_euler = euler_from_quaternion(target_quaternion)
+        target_yaw = math.degrees(target_euler[2])
+
+        current_quaternion = (
+            self.local_position.pose.orientation.x,
+            self.local_position.pose.orientation.y,
+            self.local_position.pose.orientation.z,
+            self.local_position.pose.orientation.w)
+        current_euler = euler_from_quaternion(current_quaternion)
+        current_yaw = math.degrees(current_euler[2])
+
+        s = s + "(" + str(pos.pose.position.x)
+        s = s + ", " + str(pos.pose.position.y)
+        s = s + ", " + str(pos.pose.position.z) + ")"
+        s = s + " Target Yaw: " + str(target_yaw)
+        s = s + " Current Yaw: " + str(current_yaw)
+        print(s)
+
     def pub_position_tf(self):
         br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
@@ -132,10 +156,16 @@ class MavrosOffboardPosctlTest():
         pos.pose.orientation = Quaternion(*quaternion)
 
         count = 0
+        degree_yaw = 0
         while True:
             # update timestamp for each published SP
             pos.header.stamp = rospy.Time.now()
+            degree_yaw += 1
+            yaw = math.radians(degree_yaw)
+            quaternion = quaternion_from_euler(0, 0, yaw)
+            pos.pose.orientation = Quaternion(*quaternion)
             self.pub_spt.publish(pos)
+            self.print_pos("Position: ", pos)
 
             if not self.armed and count > 5:
                 self._srv_cmd_long(False, 176, False,
@@ -156,7 +186,7 @@ class MavrosOffboardPosctlTest():
         while not self.has_global_pos:
             self.rate.sleep()
 
-        positions = (6, -0.5, self.height)
+        positions = (10, 0, self.height)
         print(positions)
 
         for i in range(0, len(positions)):

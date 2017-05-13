@@ -49,6 +49,7 @@ class MavrosOffboardPosctlTest():
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
         self.height = 2
+        self.last_yaw = 0
 
     #
     # General callback functions used in tests
@@ -72,6 +73,40 @@ class MavrosOffboardPosctlTest():
     #
     # Helper methods
     #
+    def print_pos(self, s, pos):
+        target_quaternion = (
+            pos.pose.orientation.x,
+            pos.pose.orientation.y,
+            pos.pose.orientation.z,
+            pos.pose.orientation.w)
+        target_euler = euler_from_quaternion(target_quaternion)
+        target_yaw = math.degrees(target_euler[2])
+
+        current_quaternion = (
+            self.local_position.pose.orientation.x,
+            self.local_position.pose.orientation.y,
+            self.local_position.pose.orientation.z,
+            self.local_position.pose.orientation.w)
+        current_euler = euler_from_quaternion(current_quaternion)
+        current_yaw = math.degrees(current_euler[2])
+
+        s = s + "(" + str(pos.pose.position.x)
+        s = s + ", " + str(pos.pose.position.y)
+        s = s + ", " + str(pos.pose.position.z) + ")"
+        s = s + " Target Yaw: " + str(target_yaw)
+        s = s + " Current Yaw: " + str(current_yaw)
+        print(s)
+
+    def pub_pos(self, pos):
+        quaternion = (
+            pos.pose.orientation.x,
+            pos.pose.orientation.y,
+            pos.pose.orientation.z,
+            pos.pose.orientation.w)
+        euler = euler_from_quaternion(quaternion)
+        self.last_yaw = euler[2]
+        self.pub_spt.publish(pos)
+
     def pub_position_tf(self):
         br = tf2_ros.TransformBroadcaster()
         t = TransformStamped()
@@ -126,7 +161,10 @@ class MavrosOffboardPosctlTest():
             self.local_position.pose.orientation.w)
         euler = euler_from_quaternion(quaternion)
         current_yaw = euler[2]
-        return abs(desired_yaw - current_yaw) < offset
+        difference = abs(desired_yaw - current_yaw)
+        if difference > math.pi:
+            difference = (2 * math.pi) - difference
+        return abs(difference) < offset
 
     def create_pose(self, x, y, z, roll, pitch, yaw, frame):
         pose = PoseStamped()
@@ -142,7 +180,23 @@ class MavrosOffboardPosctlTest():
         pose.header.stamp = rospy.Time.now()
         return pose
 
-    def get_temp_pos(self, distance):
+    def get_turned_local_pos(self, target_x, target_y):
+        x = self.local_position.pose.position.x
+        y = self.local_position.pose.position.y
+        z = self.height
+        x_difference = target_x - x
+        y_difference = target_y - y
+        # yaw facing towards end target
+        yaw = 0
+        if y_difference != 0:
+            if x_difference < 0:
+                yaw = math.atan2(y_difference, x_difference)
+            else:
+                yaw = math.atan2(y_difference, x_difference)
+        pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
+        return pos
+
+    def get_temp_pos(self, target_x, target_y, distance):
         angle_degrees = self.direction_from_collision
         angle_radians = math.radians(angle_degrees)
         x = distance * math.cos(angle_radians)
@@ -151,7 +205,17 @@ class MavrosOffboardPosctlTest():
 
         print("X: " + str(x) + " - Y: " + str(y))
 
-        base_pos = self.create_pose(x, y, z, 0, 0, 0, "base_link")
+        x_difference = target_x - self.local_position.pose.position.x
+        y_difference = target_y - self.local_position.pose.position.y
+        yaw = 0
+        # if y_difference != 0:
+        #     if x_difference < 0:
+        #         yaw = math.atan2(y_difference, x_difference)
+        #     else:
+        #         yaw = math.atan2(y_difference, x_difference)
+        yaw = math.atan2(y_difference, x_difference)
+
+        base_pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
 
         pos = base_pos
         try:
@@ -165,18 +229,21 @@ class MavrosOffboardPosctlTest():
         except tf2_ros.ExtrapolationException as e:
             rospy.loginfo("Handling run-time error: %s", e)
         pos.pose.position.z = self.height
+
+        x = pos.pose.position.x
+        y = pos.pose.position.y
+        z = self.height
+        x_difference = x - self.local_position.pose.position.x
+        y_difference = y - self.local_position.pose.position.y
+        yaw = math.atan2(y_difference, x_difference)
+        pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
+
         return pos
 
     def reach_position(self, x, y, z, timeout):
         # set a position setpoint
-        pos = PoseStamped()
-        pos.header = Header()
-        pos.header.frame_id = "base_footprint"
-        pos.pose.position.x = x
-        pos.pose.position.y = y
-        pos.pose.position.z = z
-        x_difference = pos.pose.position.x - self.local_position.pose.position.x
-        y_difference = pos.pose.position.y - self.local_position.pose.position.y
+        x_difference = x - self.local_position.pose.position.x
+        y_difference = y - self.local_position.pose.position.y
         # yaw facing towards end target
         yaw = 0
         if y_difference != 0:
@@ -184,33 +251,30 @@ class MavrosOffboardPosctlTest():
                 yaw = math.atan2(y_difference, x_difference)
             else:
                 yaw = math.atan2(y_difference, x_difference)
-        quaternion = quaternion_from_euler(0, 0, yaw)
-        pos.pose.orientation = Quaternion(*quaternion)
-
-        turned_local_pos = PoseStamped()
-        turned_local_pos.header = Header()
-        turned_local_pos.header.frame_id = "base_footprint"
-        turned_local_pos.pose.position.x = self.local_position.pose.position.x
-        turned_local_pos.pose.position.y = self.local_position.pose.position.y
-        turned_local_pos.pose.position.z = self.height
-        turned_local_pos.pose.orientation = Quaternion(*quaternion)
+        self.last_yaw = yaw
+        pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
 
         # does it reach the position in X seconds?
         count = 0
         while count < timeout:
             # update timestamp for each published SP
             pos.header.stamp = rospy.Time.now()
-            if self.is_at_yaw(yaw, 10):
-                print("Can find path: " + str(self.can_find_path) + " -- Will collide: " + str(self.will_collide))
+            if self.is_at_yaw(self.last_yaw, 15):
+                # print("Can find path: " + str(self.can_find_path) + " -- Will collide: " + str(self.will_collide))
                 if self.can_find_path:
                     if self.will_collide:
-                        self.pub_spt.publish(self.get_temp_pos(0.5))
+                        temp_pos = self.get_temp_pos(x, y, 0.5)
+                        self.pub_pos(temp_pos)
+                        self.print_pos("Printing temp_pos: ", temp_pos)
                         # self.stop()
                     else:
-                        # FIXME: safe mode for when no path is found
-                        self.pub_spt.publish(pos)
+                        self.pub_pos(pos)
+                        self.print_pos("Printing pos: ", pos)
+                # FIXME: safe mode for when no path is found
             else:
-                self.pub_spt.publish(turned_local_pos)
+                turned_local_pos = self.get_turned_local_pos(x, y)
+                self.pub_pos(turned_local_pos)
+                self.print_pos("Printing turned_local_pos: ", turned_local_pos)
 
             if not self.armed and count > 5:
                 self._srv_cmd_long(False, 176, False,
