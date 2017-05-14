@@ -49,7 +49,7 @@ class MavrosOffboardPosctlTest():
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
         self.height = 2
-        self.last_yaw = 0
+        self.target_pos = PoseStamped()
 
     #
     # General callback functions used in tests
@@ -73,6 +73,12 @@ class MavrosOffboardPosctlTest():
     #
     # Helper methods
     #
+    def get_yaw(self):
+        x_difference = self.target_pos.pose.position.x - self.local_position.pose.position.x
+        y_difference = self.target_pos.pose.position.y - self.local_position.pose.position.y
+        yaw = math.atan2(y_difference, x_difference)
+        return float(yaw)
+
     def print_pos(self, s, pos):
         target_quaternion = (
             pos.pose.orientation.x,
@@ -95,16 +101,10 @@ class MavrosOffboardPosctlTest():
         s = s + ", " + str(pos.pose.position.z) + ")"
         s = s + " Target Yaw: " + str(target_yaw)
         s = s + " Current Yaw: " + str(current_yaw)
+        s = s + " Function Yaw: " + str(math.degrees(self.get_yaw()))
         print(s)
 
     def pub_pos(self, pos):
-        quaternion = (
-            pos.pose.orientation.x,
-            pos.pose.orientation.y,
-            pos.pose.orientation.z,
-            pos.pose.orientation.w)
-        euler = euler_from_quaternion(quaternion)
-        self.last_yaw = euler[2]
         self.pub_spt.publish(pos)
 
     def pub_position_tf(self):
@@ -124,7 +124,7 @@ class MavrosOffboardPosctlTest():
 
         br.sendTransform(t)
 
-    def pub_target_location(self, x, y):
+    def pub_target_marker(self, x, y):
         marker = Marker()
         marker.header.frame_id = "base_link"
         marker.id = 15
@@ -193,7 +193,7 @@ class MavrosOffboardPosctlTest():
                 yaw = math.atan2(y_difference, x_difference)
             else:
                 yaw = math.atan2(y_difference, x_difference)
-        pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
+        pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
         return pos
 
     def get_temp_pos(self, target_x, target_y, distance):
@@ -215,13 +215,13 @@ class MavrosOffboardPosctlTest():
         #         yaw = math.atan2(y_difference, x_difference)
         yaw = math.atan2(y_difference, x_difference)
 
-        base_pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
+        base_pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
 
         pos = base_pos
         try:
             trans = self.tfBuffer.lookup_transform("odom", "base_link", rospy.Time(0))
             pos = tf2_geometry_msgs.do_transform_pose(pos, trans)
-            self.pub_target_location(x, y)
+            self.pub_target_marker(x, y)
         except tf2_ros.LookupException as e:
             rospy.loginfo("Handling Lookup error: %s", e)
         except tf2_ros.ConnectivityException as e:
@@ -236,7 +236,7 @@ class MavrosOffboardPosctlTest():
         x_difference = x - self.local_position.pose.position.x
         y_difference = y - self.local_position.pose.position.y
         yaw = math.atan2(y_difference, x_difference)
-        pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
+        pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
 
         return pos
 
@@ -251,23 +251,24 @@ class MavrosOffboardPosctlTest():
                 yaw = math.atan2(y_difference, x_difference)
             else:
                 yaw = math.atan2(y_difference, x_difference)
-        self.last_yaw = yaw
         pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
+        self.target_pos = pos
 
         # does it reach the position in X seconds?
         count = 0
         while count < timeout:
             # update timestamp for each published SP
             pos.header.stamp = rospy.Time.now()
-            if self.is_at_yaw(self.last_yaw, 15):
+            if self.is_at_yaw(self.get_yaw(), 15):
                 # print("Can find path: " + str(self.can_find_path) + " -- Will collide: " + str(self.will_collide))
                 if self.can_find_path:
                     if self.will_collide:
-                        temp_pos = self.get_temp_pos(x, y, 0.5)
+                        temp_pos = self.get_temp_pos(x, y, 1)
                         self.pub_pos(temp_pos)
                         self.print_pos("Printing temp_pos: ", temp_pos)
                         # self.stop()
                     else:
+                        pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
                         self.pub_pos(pos)
                         self.print_pos("Printing pos: ", pos)
                 # FIXME: safe mode for when no path is found
@@ -298,9 +299,9 @@ class MavrosOffboardPosctlTest():
             self.rate.sleep()
 
         positions = (
-            (9, 0, self.height),
-            (-3, -1, self.height),
-            (9, 0, self.height))
+            (9, -1, self.height),
+            (-3, 0, self.height),
+            (9, -1, self.height))
         print(positions)
 
         for i in range(0, len(positions)):

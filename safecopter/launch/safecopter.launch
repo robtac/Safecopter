@@ -12,14 +12,22 @@
  -->
 
  <node pkg="tf" type="static_transform_publisher" name="cam1"  machine="localhost"
-  args="0 0 0 -1.5707 0 3.1428 cam1_link pf1_link 100" />
+  args="0 0 0 -1.5707 0 3.1428 cam1_link pf_FF_dephcam_link 100" />
  <node pkg="tf" type="static_transform_publisher" name="cam2"  machine="localhost"
-  args="0 0 0 -1.5707 0 3.1428 cam2_link pf2_link 100" />
+  args="0 0 0 -1.5707 0 3.1428 cam2_link pf_FL_dephcam_link 100" />
  <node pkg="tf" type="static_transform_publisher" name="cam3"  machine="localhost"
-  args="0 0 0 -1.5707 0 3.1428 cam3_link pf3_link 100" />
+  args="0 0 0 -1.5707 0 3.1428 cam3_link pf_FR_dephcam_link 100" />
 
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
-  <arg name="base_name" value="pf1" />
+  <arg name="base_name" value="pf_FF_dephcam" />
+  <arg name="sensor" value="0005-1203-0034-2215" />
+  <arg name="publish_tf" value="true" />
+  <arg name="max_noise" value="0.04" />
+  <arg name="operation_mode" value="0" />
+ </include>
+
+ <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
+  <arg name="base_name" value="pf_FR_dephcam" />
   <arg name="sensor" value="0005-1203-0034-1806" />
   <arg name="publish_tf" value="true" />
   <arg name="max_noise" value="0.04" />
@@ -27,21 +35,13 @@
  </include>
 
  <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
-  <arg name="base_name" value="pf2" />
+  <arg name="base_name" value="pf_FL_dephcam" />
   <arg name="sensor" value="0005-1203-0034-2008" />
   <arg name="publish_tf" value="true" />
   <arg name="max_noise" value="0.04" />
   <arg name="operation_mode" value="0" />
  </include>
  
- <include file="$(find pico_flexx_driver)/launch/pico_flexx_driver.launch">
-  <arg name="base_name" value="pf3" />
-  <arg name="sensor" value="0005-1203-0034-2215" />
-  <arg name="publish_tf" value="true" />
-  <arg name="max_noise" value="0.04" />
-  <arg name="operation_mode" value="0" />
- </include>
-
  <node name="markers" pkg="safecopter" type="markers" />
 
 <!--
