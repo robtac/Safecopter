@@ -184,15 +184,15 @@ class MavrosOffboardPosctlTest():
         x = self.local_position.pose.position.x
         y = self.local_position.pose.position.y
         z = self.height
-        x_difference = target_x - x
-        y_difference = target_y - y
+        # x_difference = target_x - x
+        # y_difference = target_y - y
         # yaw facing towards end target
-        yaw = 0
-        if y_difference != 0:
-            if x_difference < 0:
-                yaw = math.atan2(y_difference, x_difference)
-            else:
-                yaw = math.atan2(y_difference, x_difference)
+        # yaw = 0
+        # if y_difference != 0:
+        #     if x_difference < 0:
+        #         yaw = math.atan2(y_difference, x_difference)
+        #     else:
+        #         yaw = math.atan2(y_difference, x_difference)
         pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
         return pos
 
@@ -205,15 +205,15 @@ class MavrosOffboardPosctlTest():
 
         print("X: " + str(x) + " - Y: " + str(y))
 
-        x_difference = target_x - self.local_position.pose.position.x
-        y_difference = target_y - self.local_position.pose.position.y
-        yaw = 0
-        # if y_difference != 0:
-        #     if x_difference < 0:
-        #         yaw = math.atan2(y_difference, x_difference)
-        #     else:
-        #         yaw = math.atan2(y_difference, x_difference)
-        yaw = math.atan2(y_difference, x_difference)
+        # x_difference = target_x - self.local_position.pose.position.x
+        # y_difference = target_y - self.local_position.pose.position.y
+        # yaw = 0
+        # # if y_difference != 0:
+        # #     if x_difference < 0:
+        # #         yaw = math.atan2(y_difference, x_difference)
+        # #     else:
+        # #         yaw = math.atan2(y_difference, x_difference)
+        # yaw = math.atan2(y_difference, x_difference)
 
         base_pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
 
@@ -233,9 +233,9 @@ class MavrosOffboardPosctlTest():
         x = pos.pose.position.x
         y = pos.pose.position.y
         z = self.height
-        x_difference = x - self.local_position.pose.position.x
-        y_difference = y - self.local_position.pose.position.y
-        yaw = math.atan2(y_difference, x_difference)
+        # x_difference = x - self.local_position.pose.position.x
+        # y_difference = y - self.local_position.pose.position.y
+        # yaw = math.atan2(y_difference, x_difference)
         pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
 
         return pos
