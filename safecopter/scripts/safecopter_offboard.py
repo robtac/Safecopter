@@ -39,7 +39,7 @@ class MavrosOffboardPosctlTest():
         self.pub_spt = rospy.Publisher('mavros/setpoint_position/local', PoseStamped, queue_size=10)
         rospy.wait_for_service('mavros/cmd/command', 30)
         self._srv_cmd_long = rospy.ServiceProxy('mavros/cmd/command', CommandLong, persistent=True)
-        self.rate = rospy.Rate(10) # 10hz
+        self.rate = rospy.Rate(30) # 10hz
         self.has_global_pos = False
         self.local_position = PoseStamped()
         self.armed = False
@@ -289,7 +289,7 @@ class MavrosOffboardPosctlTest():
 
                 self.armed = True
 
-            if self.is_at_position(pos.pose.position.x, pos.pose.position.y, pos.pose.position.z, 1):
+            if self.is_at_position(pos.pose.position.x, pos.pose.position.y, pos.pose.position.z, .2):
                 break
             count += 1
             self.rate.sleep()

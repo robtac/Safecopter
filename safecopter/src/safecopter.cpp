@@ -300,13 +300,14 @@ bool detect_collision (float degree_theta)
   box->cost_density = 100;
   box->threshold_occupied = 5;
 
-  fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octmap));
+//  fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octmap));
+  fcl::OcTree* tree = new fcl::OcTree(std::shared_ptr<const octomap::OcTree>(octmap));
 
   fcl::Vec3f box_center = fcl::Vec3f(m_collision_distance / 2 + m_min_distance, 0, 0);
   fcl::Vec3f translation_vec = fcl::Vec3f((box_center[0] * cos(theta) - box_center[1] * sin(theta)), (box_center[1] * cos(theta) + box_center[0] * sin(theta)), box_center[2]);
   fcl::Transform3f transformation = fcl::Transform3f(rotation_mat, translation_vec);
-  collision_box = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(box), transformation);
-  collision_tree = new fcl::CollisionObject(boost::shared_ptr<fcl::CollisionGeometry>(tree), fcl::Transform3f());
+  collision_box = new fcl::CollisionObject(std::shared_ptr<fcl::CollisionGeometry>(box), transformation);
+  collision_tree = new fcl::CollisionObject(std::shared_ptr<fcl::CollisionGeometry>(tree), fcl::Transform3f());
 
   fcl::CollisionRequest request;
   fcl::CollisionResult result;

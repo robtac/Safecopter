@@ -359,9 +359,9 @@ int main (int argc, char** argv)
   tf_listener = new tf::TransformListener();
 
   // Create a ROS subscriber for the input point cloud
-  ros::Subscriber sub = nh.subscribe ("/pf1/points", 1, cloud_cb_cam1);
-  ros::Subscriber sub2 = nh.subscribe ("/pf2/points", 1, cloud_cb_cam2);
-  ros::Subscriber sub3 = nh.subscribe("/pf3/points", 1, cloud_cb_cam3);
+  ros::Subscriber sub = nh.subscribe ("/pf_FF_dephcam/points", 1, cloud_cb_cam1);
+  ros::Subscriber sub3 = nh.subscribe ("/pf_FR_dephcam/points", 1, cloud_cb_cam2);
+  ros::Subscriber sub2 = nh.subscribe ("/pf_FL_dephcam/points", 1, cloud_cb_cam3);
   combine_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/combine_time", 1);
   detect_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/detect_time", 1);
   avoid_time_pub = nh.advertise<std_msgs::Float64>("/pointcloud/avoid_time", 1);

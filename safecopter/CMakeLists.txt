@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(safecopter)
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -11,10 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   pcl_ros
   pcl_conversions
-  fcl
+  octomap
 )
+find_package(fcl REQUIRED)
 find_package(PCL REQUIRED)
-find_package(octomap REQUIRED)
+## find_package(octomap REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -123,6 +126,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 include_directories(${OCTOMAP_INCLUDE_DIRS})
+include_directories(${FCL_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(safecopter
@@ -156,6 +160,8 @@ target_link_libraries(safecopter
   ${OCTOMAP_LIBRARIES}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
+##  ${fcl_LIBRARIES}
+  fcl
 )
 
 link_libraries(${OCTOMAP_LIBRARIES})
