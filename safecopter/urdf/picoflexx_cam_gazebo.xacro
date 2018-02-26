@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Macro to add a camera. -->
+  <xacro:macro name="picoflexx_cam_gazebo_macro"
+    params="camera_suffix">
+
+  <gazebo reference="${camera_suffix}_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+  <!-- camera  -->
+  <gazebo reference="${camera_suffix}_link">
+    <sensor type="depth" name="${camera_suffix}_dephcam">
+    <pose>0 0 0 0 0 0</pose>
+    <update_rate>30</update_rate>
+    <camera name="${camera_suffix}_dcam">
+      <horizontal_fov>1.3962634</horizontal_fov>
+      <image>
+        <width>640</width>
+        <height>480</height>
+        <format>R8G8B8</format>
+      </image>
+      <depth_camera>
+        <width>224</width>
+        <height>171</height>
+        <format>L8</format>
+         <!-- <output>points</output> -->
+      </depth_camera>
+      <clip>
+        <near>0.02</near>
+        <far>300</far>
+      </clip>
+      <noise>
+        <type>gaussian</type>
+        <!-- Noise is sampled independently per pixel on each frame.  
+             That pixel's noise value is added to each of its color
+             channels, which at that point lie in the range [0,1]. -->
+        <mean>0.0</mean>
+        <stddev>0.007</stddev>
+      </noise>
+    </camera>
+    <plugin name="${camera_suffix}_controller" filename="libgazebo_ros_openni_kinect.so">
+        <topicName>/kinect_sim/kinect</topicName>
+        <baseline>0.2</baseline>
+        <alwaysOn>true</alwaysOn>
+        <updateRate>30</updateRate>
+        <cameraName>${camera_suffix}_dephcam</cameraName>
+        <imageTopicName>rgb/image_raw</imageTopicName>
+        <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
+	<depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName> <!-- NEW -->
+	<pointCloudCutoffMax>5</pointCloudCutoffMax> <!-- NEW -->
+        <depthImageTopicName>depth/image_raw</depthImageTopicName>
+        <depthImageInfoTopicName>depth/camera_info</depthImageInfoTopicName>
+        <pointCloudTopicName>points</pointCloudTopicName>
+        <frameName>${camera_suffix}_link_optical</frameName>
+        <pointCloudCutoff>0.5</pointCloudCutoff>
+        <distortionK1>0.00000001</distortionK1>
+        <distortionK2>0.00000001</distortionK2>
+        <distortionK3>0.00000001</distortionK3>
+        <distortionT1>0.00000001</distortionT1>
+        <distortionT2>0.00000001</distortionT2>
+        <CxPrime>0</CxPrime>
+        <Cx>0</Cx>
+        <Cy>0</Cy>
+        <focalLength>0</focalLength>
+        <hackBaseline>0</hackBaseline>
+    </plugin>
+  </sensor>
+  </gazebo>
+
+  </xacro:macro>
+</robot>
