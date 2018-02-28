@@ -44,7 +44,7 @@
   </xacro:property>
 
   <!-- Included URDF Files -->
-  <xacro:include filename="$(arg rotors_description_dir)/urdf/multirotor_base.xacro" />
+  <xacro:include filename="$(find safecopter)/urdf/multirotor_base.xacro" />
 
   <!-- Instantiate multirotor_base_macro once -->
   <xacro:multirotor_base_macro
@@ -146,7 +146,7 @@
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
 
-  <xacro:include filename="/home/robbie/src/Firmware/Tools/sitl_gazebo/models/rotors_description/urdf/picoflexx_cam.xacro" />
+  <xacro:include filename="$(find safecopter)/urdf/picoflexx_cam.xacro" />
   <xacro:picoflexx_cam_macro
       parent_link="base_link"
       camera_suffix="pf_FF">

@@ -12,7 +12,7 @@
   <gazebo reference="${camera_suffix}_link">
     <sensor type="depth" name="${camera_suffix}_dephcam">
     <pose>0 0 0 0 0 0</pose>
-    <update_rate>30</update_rate>
+    <update_rate>5</update_rate>
     <camera name="${camera_suffix}_dcam">
       <horizontal_fov>1.3962634</horizontal_fov>
       <image>
@@ -43,7 +43,7 @@
         <topicName>/kinect_sim/kinect</topicName>
         <baseline>0.2</baseline>
         <alwaysOn>true</alwaysOn>
-        <updateRate>30</updateRate>
+        <updateRate></updateRate>
         <cameraName>${camera_suffix}_dephcam</cameraName>
         <imageTopicName>rgb/image_raw</imageTopicName>
         <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>

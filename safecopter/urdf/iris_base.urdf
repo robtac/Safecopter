@@ -601,7 +601,7 @@
   <gazebo reference="pf_FF_link">
     <sensor name="pf_FF_dephcam" type="depth">
       <pose>0 0 0 0 0 0</pose>
-      <update_rate>30</update_rate>
+      <update_rate>5</update_rate>
       <camera name="pf_FF_dcam">
         <horizontal_fov>1.3962634</horizontal_fov>
         <image>
@@ -632,7 +632,7 @@
         <topicName>/kinect_sim/kinect</topicName>
         <baseline>0.2</baseline>
         <alwaysOn>true</alwaysOn>
-        <updateRate>30</updateRate>
+        <updateRate/>
         <cameraName>pf_FF_dephcam</cameraName>
         <imageTopicName>rgb/image_raw</imageTopicName>
         <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
@@ -665,7 +665,7 @@
   <gazebo reference="pf_FR_link">
     <sensor name="pf_FR_dephcam" type="depth">
       <pose>0 0 0 0 0 0</pose>
-      <update_rate>30</update_rate>
+      <update_rate>5</update_rate>
       <camera name="pf_FR_dcam">
         <horizontal_fov>1.3962634</horizontal_fov>
         <image>
@@ -696,7 +696,7 @@
         <topicName>/kinect_sim/kinect</topicName>
         <baseline>0.2</baseline>
         <alwaysOn>true</alwaysOn>
-        <updateRate>30</updateRate>
+        <updateRate/>
         <cameraName>pf_FR_dephcam</cameraName>
         <imageTopicName>rgb/image_raw</imageTopicName>
         <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
@@ -729,7 +729,7 @@
   <gazebo reference="pf_FL_link">
     <sensor name="pf_FL_dephcam" type="depth">
       <pose>0 0 0 0 0 0</pose>
-      <update_rate>30</update_rate>
+      <update_rate>5</update_rate>
       <camera name="pf_FL_dcam">
         <horizontal_fov>1.3962634</horizontal_fov>
         <image>
@@ -760,7 +760,7 @@
         <topicName>/kinect_sim/kinect</topicName>
         <baseline>0.2</baseline>
         <alwaysOn>true</alwaysOn>
-        <updateRate>30</updateRate>
+        <updateRate/>
         <cameraName>pf_FL_dephcam</cameraName>
         <imageTopicName>rgb/image_raw</imageTopicName>
         <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
