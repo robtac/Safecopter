@@ -48,7 +48,7 @@ class MavrosOffboardPosctlTest():
         self.will_collide = False
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
-        self.height = 2.5
+        self.height = 3
         self.target_pos = PoseStamped()
 
     #
@@ -74,26 +74,12 @@ class MavrosOffboardPosctlTest():
     # Helper methods
     #
     def get_yaw(self):
-        x_difference = self.target_pos.pose.position.x - self.local_position.pose.position.x
-        y_difference = self.target_pos.pose.position.y - self.local_position.pose.position.y
+        # x_difference = self.target_pos.pose.position.x - self.local_position.pose.position.x
+        # y_difference = self.target_pos.pose.position.y - self.local_position.pose.position.y
+        x_difference = 0 - self.local_position.pose.position.x
+        y_difference = 0 - self.local_position.pose.position.y
         yaw = math.atan2(y_difference, x_difference)
         return float(yaw)
-
-    def get_rotate_yaw(self, x, y):
-        x_difference = x - self.local_position.pose.position.x
-        y_difference = y - self.local_position.pose.position.y
-        yaw = math.atan2(y_difference, x_difference)
-        return float(yaw)
-
-    def get_current_yaw(self):
-        quaternion = (
-            self.local_position.pose.orientation.x,
-            self.local_position.pose.orientation.y,
-            self.local_position.pose.orientation.z,
-            self.local_position.pose.orientation.w)
-        euler = euler_from_quaternion(quaternion)
-        current_yaw = euler[2]
-        return current_yaw
 
     def print_pos(self, s, pos):
         target_quaternion = (
@@ -271,28 +257,12 @@ class MavrosOffboardPosctlTest():
         self.target_pos = pos
 
         # does it reach the position in X seconds?
-        count = 0
         # while count < timeout:
         while True:
             # update timestamp for each published SP
             pos.header.stamp = rospy.Time.now()
-            if self.is_at_yaw(self.get_yaw(), 15):
-                # print("Can find path: " + str(self.can_find_path) + " -- Will collide: " + str(self.will_collide))
-                if self.can_find_path:
-                    if self.will_collide:
-                        temp_pos = self.get_temp_pos(x, y, 1)
-                        self.pub_pos(temp_pos)
-                        self.print_pos("Printing temp_pos: ", temp_pos)
-                        # self.stop()
-                    else:
-                        pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
-                        self.pub_pos(pos)
-                        self.print_pos("Printing pos: ", pos)
-                # FIXME: safe mode for when no path is found
-            else:
-                turned_local_pos = self.get_turned_local_pos(x, y)
-                self.pub_pos(turned_local_pos)
-                self.print_pos("Printing turned_local_pos: ", turned_local_pos)
+            pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
+            self.pub_spt.publish(pos)
 
             if not self.armed:
                 self._srv_cmd_long(False, 176, False,
@@ -306,119 +276,19 @@ class MavrosOffboardPosctlTest():
 
                 self.armed = True
 
-            if self.is_at_position(pos.pose.position.x, pos.pose.position.y, pos.pose.position.z, .2):
-                break
-            count += 1
-            self.rate.sleep()
-
-    def rotate_position(self, x, y, z, rotate_pos):
-        # set a position setpoint
-        x_difference = x - self.local_position.pose.position.x
-        y_difference = y - self.local_position.pose.position.y
-        # yaw facing towards end target
-        yaw = 0
-        if y_difference != 0:
-            if x_difference < 0:
-                yaw = math.atan2(y_difference, x_difference)
-            else:
-                yaw = math.atan2(y_difference, x_difference)
-        pos = self.create_pose(x, y, z, 0, 0, yaw, "base_link")
-        self.target_pos = pos
-
-        # does it reach the position in X seconds?
-        count = 0
-        # while count < timeout:
-        while True:
-            # update timestamp for each published SP
-            pos.header.stamp = rospy.Time.now()
-            if self.is_at_yaw(self.get_rotate_yaw(rotate_pos[0], rotate_pos[1]), 15):
-                # print("Can find path: " + str(self.can_find_path) + " -- Will collide: " + str(self.will_collide))
-                pos = self.create_pose(x, y, z, 0, 0, self.get_rotate_yaw(rotate_pos[0], rotate_pos[1]), "base_link")
-                self.pub_pos(pos)
-            else:
-                turned_local_pos = self.get_turned_local_pos(x, y)
-                self.pub_pos(turned_local_pos)
-                self.print_pos("Printing turned_local_pos: ", turned_local_pos)
-
-            if self.is_at_position(pos.pose.position.x, pos.pose.position.y, pos.pose.position.z, 1):
-                break
-            count += 1
-            self.rate.sleep()
-
-    def spin(self, x, y, z):
-        # set a position setpoint
-        pos = PoseStamped()
-        pos.header = Header()
-        pos.header.frame_id = "base_footprint"
-        pos.pose.position.x = x
-        pos.pose.position.y = y
-        pos.pose.position.z = z
-        yaw = self.get_current_yaw()
-        quaternion = quaternion_from_euler(0, 0, yaw)
-        pos.pose.orientation = Quaternion(*quaternion)
-
-        degree_yaw_add = 0
-        while degree_yaw_add < 360:
-            # update timestamp for each published SP
-            pos.header.stamp = rospy.Time.now()
-            degree_yaw_add += 1
-            yaw = math.radians(degree_yaw_add)
-            quaternion = quaternion_from_euler(0, 0, yaw)
-            pos.pose.orientation = Quaternion(*quaternion)
-            self.pub_spt.publish(pos)
-            self.print_pos("Position: ", pos)
+            # if self.is_at_position(pos.pose.position.x, pos.pose.position.y, pos.pose.position.z, .2):
+            #     break
             self.rate.sleep()
 
     def test_posctl(self):
         while not self.has_global_pos:
             self.rate.sleep()
 
-        # Reach the target position
-        positions = (
-            (9, 0, self.height),
-            (-9, 0, self.height))
-        for i in range(0, len(positions)):
-            self.reach_position(positions[i][0], positions[i][1], positions[i][2], 1000)
+        positions = (9, 0, self.height)
+        # for i in range(0, len(positions)):
+        self.reach_position(positions[0], positions[1], positions[2], 1000)
 
 
-        # Rotate halfway around building
-        rotate_pos = (-24, 0)
-        positions = (
-            (-9, 8, self.height + .5),
-            (-24, 9, self.height + .5))
-        for i in range(0, len(positions)):
-            self.rotate_position(positions[i][0], positions[i][1], positions[i][2], rotate_pos)
-
-        # Go in building
-        positions = (-24, 0, self.height + 1)
-        for i in range(0, len(positions)):
-            self.reach_position(positions[0], positions[1], positions[2], 1000)
-
-        # Spin to map the inside of the building
-        self.spin(-24, 0, self.height + 1)
-
-        # Head back out
-        positions = (
-            (-24, 0, self.height + 1),
-            (-24, 9, self.height + 1))
-        for i in range(0, len(positions)):
-            self.reach_position(positions[i][0], positions[i][1], positions[i][2], 1000)
-
-        # Continue around building
-        positions = (
-            (-39, 9, self.height + 1),
-            (-39, -9, self.height + .5),
-            (-9, -9, self.height + .5),
-            (-9, 0, self.height + .5))
-        for i in range(0, len(positions)):
-            self.rotate_position(positions[i][0], positions[i][1], positions[i][2], rotate_pos)
-
-        # Head back to home
-        positions = (
-            (-9, 0, self.height),
-            (9, 0, self.height))
-        for i in range(0, len(positions)):
-                self.reach_position(positions[i][0], positions[i][1], positions[i][2], 1000)
 
 if __name__ == '__main__':
     try:

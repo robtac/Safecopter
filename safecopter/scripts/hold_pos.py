@@ -48,7 +48,7 @@ class MavrosOffboardPosctlTest():
         self.will_collide = False
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
-        self.height = 2
+        self.height = 2.2
 
     #
     # General callback functions used in tests
@@ -156,7 +156,7 @@ class MavrosOffboardPosctlTest():
         while not self.has_global_pos:
             self.rate.sleep()
 
-        positions = (6, -0.5, self.height)
+        positions = (9, 0, self.height)
         print(positions)
 
         for i in range(0, len(positions)):
