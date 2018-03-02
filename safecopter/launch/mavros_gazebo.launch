@@ -12,7 +12,7 @@
     <arg name="est" default="ekf2"/>
     <arg name="vehicle" default="iris"/>
 <!--    <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world"/> -->
-    <arg name="world" default="/home/robbie/catkin_ws/src/safecopter/world.world"/>
+    <arg name="world" default="/home/robbie/catkin_ws/src/safecopter/safecopter.world"/>
     <arg name="sdf" default="/home/robbie/catkin_ws/src/safecopter/safecopter.sdf"/>
 
     <arg name="rcS" default="$(find px4)/posix-configs/SITL/init/$(arg est)/$(arg vehicle)"/>

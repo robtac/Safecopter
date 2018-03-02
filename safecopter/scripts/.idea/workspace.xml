@@ -30,8 +30,8 @@
       <file leaf-file-name="turn_pos.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/turn_pos.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="478">
-              <caret line="168" column="0" lean-forward="true" selection-start-line="168" selection-start-column="0" selection-end-line="181" selection-end-column="22" />
+            <state relative-caret-position="244">
+              <caret line="155" column="31" lean-forward="false" selection-start-line="155" selection-start-column="31" selection-end-line="155" selection-end-column="31" />
               <folding />
             </state>
           </provider>
@@ -40,8 +40,8 @@
       <file leaf-file-name="safecopter_offboard.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/safecopter_offboard.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="324">
-              <caret line="354" column="29" lean-forward="false" selection-start-line="354" selection-start-column="29" selection-end-line="354" selection-end-column="29" />
+            <state relative-caret-position="658">
+              <caret line="419" column="47" lean-forward="false" selection-start-line="419" selection-start-column="47" selection-end-line="419" selection-end-column="47" />
               <folding>
                 <element signature="e#13#25#0" expanded="true" />
               </folding>
@@ -65,6 +65,8 @@
     <findStrings>
       <find>yaw</find>
       <find>odom</find>
+      <find>print_pos</find>
+      <find>print(</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -392,6 +394,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/turn_pos.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="244">
+          <caret line="155" column="31" lean-forward="false" selection-start-line="155" selection-start-column="31" selection-end-line="155" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/start_pos.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="784">
@@ -400,18 +410,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/turn_pos.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="478">
-          <caret line="168" column="0" lean-forward="true" selection-start-line="168" selection-start-column="0" selection-end-line="181" selection-end-column="22" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/safecopter_offboard.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="324">
-          <caret line="354" column="29" lean-forward="false" selection-start-line="354" selection-start-column="29" selection-end-line="354" selection-end-column="29" />
+        <state relative-caret-position="658">
+          <caret line="419" column="47" lean-forward="false" selection-start-line="419" selection-start-column="47" selection-end-line="419" selection-end-column="47" />
           <folding>
             <element signature="e#13#25#0" expanded="true" />
           </folding>

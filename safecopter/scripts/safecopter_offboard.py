@@ -118,7 +118,7 @@ class MavrosOffboardPosctlTest():
         s = s + " Target Yaw: " + str(target_yaw)
         s = s + " Current Yaw: " + str(current_yaw)
         s = s + " Function Yaw: " + str(math.degrees(self.get_yaw()))
-        print(s)
+        # print(s)
 
     def pub_pos(self, pos):
         self.pub_spt.publish(pos)
@@ -219,7 +219,7 @@ class MavrosOffboardPosctlTest():
         y = distance * math.sin(angle_radians)
         z = 0
 
-        print("X: " + str(x) + " - Y: " + str(y))
+        # print("X: " + str(x) + " - Y: " + str(y))
 
         # x_difference = target_x - self.local_position.pose.position.x
         # y_difference = target_y - self.local_position.pose.position.y
@@ -294,7 +294,8 @@ class MavrosOffboardPosctlTest():
                 self.pub_pos(turned_local_pos)
                 self.print_pos("Printing turned_local_pos: ", turned_local_pos)
 
-            if not self.armed:
+            if not self.armed and count > 5:
+                print("Arming")
                 self._srv_cmd_long(False, 176, False,
                                    1, 6, 0, 0, 0, 0, 0)
                 # make sure the first command doesn't get lost
@@ -375,8 +376,10 @@ class MavrosOffboardPosctlTest():
 
         # Reach the target position
         positions = (
-            (9, 0, self.height),
-            (-9, 0, self.height))
+            # (0, 0, self.height),
+            (0, 0, self.height),
+            (-18, 0, self.height))
+        print("Reaching the target position")
         for i in range(0, len(positions)):
             self.reach_position(positions[i][0], positions[i][1], positions[i][2], 1000)
 
@@ -384,41 +387,47 @@ class MavrosOffboardPosctlTest():
         # Rotate halfway around building
         rotate_pos = (-24, 0)
         positions = (
-            (-9, 8, self.height + .5),
-            (-24, 9, self.height + .5))
+            (-18, 8, self.height + .5),
+            (-33, 9, self.height + .5))
+        print("Rotating around building")
         for i in range(0, len(positions)):
             self.rotate_position(positions[i][0], positions[i][1], positions[i][2], rotate_pos)
 
         # Go in building
-        positions = (-24, 0, self.height + 1)
+        positions = (-33, 0, self.height + 1)
+        print("Going inside building")
         for i in range(0, len(positions)):
             self.reach_position(positions[0], positions[1], positions[2], 1000)
 
         # Spin to map the inside of the building
+        print("Mapping the inside of the building")
         self.spin(-24, 0, self.height + 1)
 
         # Head back out
         positions = (
-            (-24, 0, self.height + 1),
-            (-24, 9, self.height + 1))
+            (-33, 0, self.height + 1),
+            (-33, 9, self.height + 1))
+        print("Exiting the building")
         for i in range(0, len(positions)):
             self.reach_position(positions[i][0], positions[i][1], positions[i][2], 1000)
 
         # Continue around building
         positions = (
-            (-39, 9, self.height + 1),
-            (-39, -9, self.height + .5),
-            (-9, -9, self.height + .5),
-            (-9, 0, self.height + .5))
+            (-48, 9, self.height + 1),
+            (-48, -9, self.height + .5),
+            (-18, -9, self.height + .5),
+            (-18, 0, self.height + .5))
+        print("Continuing around the building")
         for i in range(0, len(positions)):
             self.rotate_position(positions[i][0], positions[i][1], positions[i][2], rotate_pos)
 
         # Head back to home
         positions = (
-            (-9, 0, self.height),
-            (9, 0, self.height))
+            (-18, 0, self.height),
+            (0, 0, self.height))
+        print("Heading back home")
         for i in range(0, len(positions)):
-                self.reach_position(positions[i][0], positions[i][1], positions[i][2], 1000)
+            self.reach_position(positions[i][0], positions[i][1], positions[i][2], 1000)
 
 if __name__ == '__main__':
     try:
