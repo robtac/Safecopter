@@ -118,7 +118,7 @@ class MavrosOffboardPosctlTest():
         s = s + " Target Yaw: " + str(target_yaw)
         s = s + " Current Yaw: " + str(current_yaw)
         s = s + " Function Yaw: " + str(math.degrees(self.get_yaw()))
-        # print(s)
+        print(s)
 
     def pub_pos(self, pos):
         self.pub_spt.publish(pos)
@@ -289,6 +289,8 @@ class MavrosOffboardPosctlTest():
                         self.pub_pos(pos)
                         self.print_pos("Printing pos: ", pos)
                 # FIXME: safe mode for when no path is found
+		else:
+		    print("Can't find pos")
             else:
                 turned_local_pos = self.get_turned_local_pos(x, y)
                 self.pub_pos(turned_local_pos)
@@ -385,7 +387,7 @@ class MavrosOffboardPosctlTest():
 
 
         # Rotate halfway around building
-        rotate_pos = (-24, 0)
+        rotate_pos = (-32, 0)
         positions = (
             (-18, 8, self.height + .5),
             (-33, 9, self.height + .5))
@@ -401,7 +403,7 @@ class MavrosOffboardPosctlTest():
 
         # Spin to map the inside of the building
         print("Mapping the inside of the building")
-        self.spin(-24, 0, self.height + 1)
+        self.spin(-33, 0, self.height + 1)
 
         # Head back out
         positions = (

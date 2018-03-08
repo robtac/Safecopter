@@ -50,7 +50,7 @@ bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
-float resolution = 0.01;
+float resolution = 0.05;
 
 // Parameters
 float m_min_distance;               float default_min_distance = 0.5;

@@ -97,16 +97,16 @@
     </spherical_coordinates>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose frame=''>-1.93072 50.2704 34.7304 0 0.633799 -1.99901</pose>
+        <pose frame=''>-2.17824 10.759 15.8409 -0 0.937798 -2.33101</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
     </gui>
     <state world_name='default'>
-      <sim_time>2999 678000000</sim_time>
-      <real_time>32 214228160</real_time>
-      <wall_time>1519969223 817755077</wall_time>
-      <iterations>15778</iterations>
+      <sim_time>3239 750000000</sim_time>
+      <real_time>316 102278002</real_time>
+      <wall_time>1520117694 616830627</wall_time>
+      <iterations>120036</iterations>
       <model name='Tree_clone'>
         <pose frame=''>-5.72909 1.67362 0 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -128,10 +128,10 @@
         </link>
       </model>
       <model name='Tree_clone_1'>
-        <pose frame=''>-9.88172 2.55798 0 0 -0 0</pose>
+        <pose frame=''>-9.22179 2.5651 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link_1'>
-          <pose frame=''>-9.88172 2.55798 0 0 -0 0</pose>
+          <pose frame=''>-9.22179 2.5651 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -157,6 +157,26 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
+      <model name='Tree_clone_11_clone'>
+        <pose frame=''>-3.25208 -2.1136 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link_1'>
+          <pose frame=''>-3.25208 -2.1136 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='Tree_clone_11_clone_1'>
+        <pose frame=''>-3.95494 1.63743 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link_1'>
+          <pose frame=''>-3.95494 1.63743 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
       <model name='Tree_clone_12'>
         <pose frame=''>-13.9215 -1.2538 0 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -168,20 +188,20 @@
         </link>
       </model>
       <model name='Tree_clone_2'>
-        <pose frame=''>-10.0435 3.88181 0 0 -0 0</pose>
+        <pose frame=''>-10.5373 3.82042 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link_1'>
-          <pose frame=''>-10.0435 3.88181 0 0 -0 0</pose>
+          <pose frame=''>-10.5373 3.82042 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='Tree_clone_3'>
-        <pose frame=''>-12.1404 4.73631 0 0 -0 0</pose>
+        <pose frame=''>-12.6437 4.60546 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link_1'>
-          <pose frame=''>-12.1404 4.73631 0 0 -0 0</pose>
+          <pose frame=''>-12.6437 4.60546 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -208,30 +228,30 @@
         </link>
       </model>
       <model name='Tree_clone_6'>
-        <pose frame=''>-5.69965 -1.70977 0 0 -0 0</pose>
+        <pose frame=''>-6.25152 -1.99235 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link_1'>
-          <pose frame=''>-5.69965 -1.70977 0 0 -0 0</pose>
+          <pose frame=''>-6.25152 -1.99235 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='Tree_clone_7'>
-        <pose frame=''>-7.64144 -1.97085 0 0 -0 0</pose>
+        <pose frame=''>-7.55738 -1.9283 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link_1'>
-          <pose frame=''>-7.64144 -1.97085 0 0 -0 0</pose>
+          <pose frame=''>-7.55738 -1.9283 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='Tree_clone_8'>
-        <pose frame=''>-9.85649 -1.28898 0 0 -0 0</pose>
+        <pose frame=''>-9.26458 -1.41266 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link_1'>
-          <pose frame=''>-9.85649 -1.28898 0 0 -0 0</pose>
+          <pose frame=''>-9.26458 -1.41266 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -978,6 +998,94 @@
         <gravity>1</gravity>
       </link>
       <pose frame=''>-24.0021 0.020104 0 0 -0 0</pose>
+    </model>
+    <model name='Tree_clone_11_clone'>
+      <link name='link_1'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.166667</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.166667</iyy>
+            <iyz>0</iyz>
+            <izz>0.166667</izz>
+          </inertia>
+        </inertial>
+        <visual name='visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>/home/robbie/Documents/tree5.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <lighting>1</lighting>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>0.3 0.3 0.3 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+            <specular>0.01 0.01 0.01 1</specular>
+            <emissive>0 0 0 1</emissive>
+          </material>
+          <cast_shadows>1</cast_shadows>
+          <transparency>0</transparency>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <static>1</static>
+      <allow_auto_disable>0</allow_auto_disable>
+      <pose frame=''>-3.25208 -2.1136 0 0 -0 0</pose>
+    </model>
+    <model name='Tree_clone_11_clone_1'>
+      <link name='link_1'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.166667</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.166667</iyy>
+            <iyz>0</iyz>
+            <izz>0.166667</izz>
+          </inertia>
+        </inertial>
+        <visual name='visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>/home/robbie/Documents/tree5.dae</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <lighting>1</lighting>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>0.3 0.3 0.3 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+            <specular>0.01 0.01 0.01 1</specular>
+            <emissive>0 0 0 1</emissive>
+          </material>
+          <cast_shadows>1</cast_shadows>
+          <transparency>0</transparency>
+        </visual>
+        <self_collide>0</self_collide>
+        <kinematic>0</kinematic>
+        <gravity>1</gravity>
+      </link>
+      <static>1</static>
+      <allow_auto_disable>0</allow_auto_disable>
+      <pose frame=''>-3.95494 1.63743 0 0 -0 0</pose>
     </model>
   </world>
 </sdf>
