@@ -8,5 +8,6 @@
 		<param name="frame_id" type="string" value="odom" />
 		<param name="latch" value="false"/>
 		<remap from="cloud_in" to="/pf_FF_dephcam/points" />
+		<!-- <remap from="cloud_in" to="/safecopter/cloud_in" /> -->
 	</node>
 </launch>

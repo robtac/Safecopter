@@ -50,6 +50,7 @@ class MavrosOffboardPosctlTest():
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
         self.height = 2.5
         self.target_pos = PoseStamped()
+        self.last_pos = PoseStamped()
 
     #
     # General callback functions used in tests
@@ -121,6 +122,7 @@ class MavrosOffboardPosctlTest():
         print(s)
 
     def pub_pos(self, pos):
+        self.last_pos = pos
         self.pub_spt.publish(pos)
 
     def pub_position_tf(self):
@@ -196,10 +198,9 @@ class MavrosOffboardPosctlTest():
         pose.header.stamp = rospy.Time.now()
         return pose
 
-    def get_turned_local_pos(self, target_x, target_y):
+    def get_turned_local_pos(self, target_x, target_y, z):
         x = self.local_position.pose.position.x
         y = self.local_position.pose.position.y
-        z = self.height
         # x_difference = target_x - x
         # y_difference = target_y - y
         # yaw facing towards end target
@@ -212,12 +213,11 @@ class MavrosOffboardPosctlTest():
         pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
         return pos
 
-    def get_temp_pos(self, target_x, target_y, distance):
+    def get_temp_pos(self, target_x, target_y, z, distance):
         angle_degrees = self.direction_from_collision
         angle_radians = math.radians(angle_degrees)
         x = distance * math.cos(angle_radians)
         y = distance * math.sin(angle_radians)
-        z = 0
 
         # print("X: " + str(x) + " - Y: " + str(y))
 
@@ -248,7 +248,6 @@ class MavrosOffboardPosctlTest():
 
         x = pos.pose.position.x
         y = pos.pose.position.y
-        z = self.height
         # x_difference = x - self.local_position.pose.position.x
         # y_difference = y - self.local_position.pose.position.y
         # yaw = math.atan2(y_difference, x_difference)
@@ -280,7 +279,7 @@ class MavrosOffboardPosctlTest():
                 # print("Can find path: " + str(self.can_find_path) + " -- Will collide: " + str(self.will_collide))
                 if self.can_find_path:
                     if self.will_collide:
-                        temp_pos = self.get_temp_pos(x, y, 1)
+                        temp_pos = self.get_temp_pos(x, y, z, 1)
                         self.pub_pos(temp_pos)
                         self.print_pos("Printing temp_pos: ", temp_pos)
                         # self.stop()
@@ -288,11 +287,11 @@ class MavrosOffboardPosctlTest():
                         pos = self.create_pose(x, y, z, 0, 0, self.get_yaw(), "base_link")
                         self.pub_pos(pos)
                         self.print_pos("Printing pos: ", pos)
-                # FIXME: safe mode for when no path is found
-		else:
-		    print("Can't find pos")
+                else:
+                    self.pub_pos(self.last_pos)
+                    self.print_pos("Last pos: ", self.last_pos)
             else:
-                turned_local_pos = self.get_turned_local_pos(x, y)
+                turned_local_pos = self.get_turned_local_pos(x, y, z)
                 self.pub_pos(turned_local_pos)
                 self.print_pos("Printing turned_local_pos: ", turned_local_pos)
 
@@ -339,7 +338,9 @@ class MavrosOffboardPosctlTest():
                 pos = self.create_pose(x, y, z, 0, 0, self.get_rotate_yaw(rotate_pos[0], rotate_pos[1]), "base_link")
                 self.pub_pos(pos)
             else:
-                turned_local_pos = self.get_turned_local_pos(x, y)
+                turned_local_pos = self.create_pose(self.last_pos.pose.position.x, self.last_pos.pose.position.y,
+                                                    self.last_pos.pose.position.z, 0, 0,
+                                                    self.get_rotate_yaw(rotate_pos[0], rotate_pos[1]), "base_link")
                 self.pub_pos(turned_local_pos)
                 self.print_pos("Printing turned_local_pos: ", turned_local_pos)
 

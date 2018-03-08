@@ -345,7 +345,6 @@ void avoid_collision ()
   std_msgs::Float64 detect_time;
   detect_time.data = (ros::Time::now() - start_detect_time).toSec() * 1000;
   detect_time_pub.publish(detect_time);
-
   if (willCollide)
   {
       draw_new_direction(0, 0.5, true);
@@ -360,10 +359,10 @@ void avoid_collision ()
         else
         {
           //std::cout << "No collision" << std::endl;
-          draw_new_direction(-degree, 4.0, false);
+          draw_new_direction(-degree - value_to_add, 4.0, false);
           willCollide = false;
 
-          pub_safecopter_data(true, true, -degree);
+          pub_safecopter_data(true, true, -degree - value_to_add);
           break;
         }
 
@@ -375,10 +374,10 @@ void avoid_collision ()
         else
         {
           //std::cout << "No collision" << std::endl;
-          draw_new_direction(degree, 4.0, false);
+          draw_new_direction(degree + value_to_add, 4.0, false);
           willCollide = false;
 
-          pub_safecopter_data(true, true, degree);
+          pub_safecopter_data(true, true, degree + value_to_add);
           break;
         }
       }
@@ -597,7 +596,7 @@ void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam1_data_valid)
   {
-//    std::cout << "Cam 1; ";
+//    std::cout << "Cam 1; " << endl;
     cam1_data_valid = true;
     
     pcl::fromROSMsg(*input, input1_pcl);
@@ -626,7 +625,7 @@ void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam2_data_valid)
   {
-//    std::cout << "Cam 2; ";
+//    std::cout << "Cam 2; " << endl;
     cam2_data_valid = true;
 
     pcl::fromROSMsg(*input, input2_pcl);
@@ -655,7 +654,7 @@ void cloud_cb_cam3 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam3_data_valid)
   {
-//    std::cout << "Cam 3; ";
+//    std::cout << "Cam 3; " << endl;
     cam3_data_valid = true;
 
     pcl::fromROSMsg(*input, input3_pcl);
@@ -727,7 +726,7 @@ int main (int argc, char** argv)
   {
     ROS_INFO("Publishing non-latched (topics are only prepared as needed, will only be re-published on map change");
   }
-  binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 1, m_latchedTopics);
+  binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 5, m_latchedTopics);
 
   // Spin
   ros::spin ();
