@@ -54,11 +54,11 @@ float resolution = 0.05;
 
 // Parameters
 float m_min_distance;               float default_min_distance = 0.5;
-float m_collision_distance;      float default_collision_distance = 4.0;
-float m_quad_width;                 float default_quad_width = 0.8;
+float m_collision_distance;         float default_collision_distance = 4.0;
+float m_quad_width;                 float default_quad_width = 1.2;
 float m_quad_height;                float default_quad_height = 0.4;
-float m_ground_minimum;     float default_ground_minimum = 0.5;
-bool m_filter_ground;               bool default_filter_ground = true;
+float m_ground_minimum;             float default_ground_minimum = 0.5;
+bool m_filter_ground;               bool default_filter_ground = false;
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;

@@ -121,7 +121,7 @@
     </plugin>
   </gazebo>
   <gazebo reference="rotor_0">
-    <material>Gazebo/Blue</material>
+    <material>Gazebo/Red</material>
   </gazebo>
   <joint name="rotor_1_joint" type="continuous">
     <origin rpy="0 0 0" xyz="-0.159 0.159 0.09"/>
@@ -187,7 +187,7 @@
     </plugin>
   </gazebo>
   <gazebo reference="rotor_1">
-    <material>Gazebo/DarkGrey</material>
+    <material>Gazebo/White</material>
   </gazebo>
   <joint name="rotor_2_joint" type="continuous">
     <origin rpy="0 0 0" xyz="0.159 0.159 0.09"/>
@@ -253,7 +253,7 @@
     </plugin>
   </gazebo>
   <gazebo reference="rotor_2">
-    <material>Gazebo/Blue</material>
+    <material>Gazebo/Red</material>
   </gazebo>
   <joint name="rotor_3_joint" type="continuous">
     <origin rpy="0 0 0" xyz="-0.159 -0.159 0.09"/>
@@ -319,7 +319,7 @@
     </plugin>
   </gazebo>
   <gazebo reference="rotor_3">
-    <material>Gazebo/DarkGrey</material>
+    <material>Gazebo/White</material>
   </gazebo>
   <joint name="pf_FF_joint" type="fixed">
     <!-- FrontFront <origin xyz="0.077 0.021 0.126" rpy="0 0 0"/> FrontRight <origin xyz="0.057 -0.056 0.126" rpy="0 0 -1.0472"/> FrontLeft <origin xyz="0.020 0.077 0.126" rpy="0 0 1.0472"/> -->

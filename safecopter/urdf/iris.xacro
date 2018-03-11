@@ -77,7 +77,7 @@
     rolling_moment_coefficient="${rolling_moment_coefficient}"
     mesh="iris_prop"
     mesh_scale="${mesh_scale_prop}"
-    color="Blue">
+    color="Red">
     <origin xyz="${arm_length_front_x} -${arm_length_front_y} ${rotor_offset_top}" rpy="0 0 0" />
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
@@ -99,7 +99,7 @@
     rolling_moment_coefficient="${rolling_moment_coefficient}"
     mesh="iris_prop"
     mesh_scale="${mesh_scale_prop}"
-    color="DarkGrey">
+    color="White">
     <origin xyz="-${arm_length_back_x} ${arm_length_back_y} ${rotor_offset_top}" rpy="0 0 0" />
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
@@ -120,7 +120,7 @@
     rolling_moment_coefficient="${rolling_moment_coefficient}"
     mesh="iris_prop"
     mesh_scale="${mesh_scale_prop}"
-    color="Blue">
+    color="Red">
     <origin xyz="${arm_length_front_x} ${arm_length_front_y} ${rotor_offset_top}" rpy="0 0 0" />
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
@@ -141,7 +141,7 @@
     rolling_moment_coefficient="${rolling_moment_coefficient}"
     mesh="iris_prop"
     mesh_scale="${mesh_scale_prop}"
-    color="DarkGrey">
+    color="White">
     <origin xyz="-${arm_length_back_x} -${arm_length_back_y} ${rotor_offset_top}" rpy="0 0 0" />
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>

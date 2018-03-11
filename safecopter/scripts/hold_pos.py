@@ -156,7 +156,7 @@ class MavrosOffboardPosctlTest():
         while not self.has_global_pos:
             self.rate.sleep()
 
-        positions = (9, 0, self.height)
+        positions = (0, 0, self.height)
         print(positions)
 
         for i in range(0, len(positions)):

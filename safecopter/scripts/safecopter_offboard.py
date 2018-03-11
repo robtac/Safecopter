@@ -427,6 +427,7 @@ class MavrosOffboardPosctlTest():
         # Head back to home
         positions = (
             (-18, 0, self.height),
+            (0, -0.5, self.height),
             (0, 0, self.height))
         print("Heading back home")
         for i in range(0, len(positions)):
