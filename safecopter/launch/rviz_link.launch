@@ -4,6 +4,7 @@
   <param name="robot_description" textfile="/home/robbie/catkin_ws/src/safecopter/urdf/iris_base.urdf" />
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+  <node name="odom_publisher" pkg="safecopter" type="odom_publisher" />
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d /home/robbie/catkin_ws/src/safecopter/safecopter.rviz" />
 

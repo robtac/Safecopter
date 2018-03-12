@@ -50,20 +50,20 @@ bool cam1_data_valid = false;
 bool cam2_data_valid = false;
 bool cam3_data_valid = false;
 
-float resolution = 0.01;
+float resolution = 0.05;
 
 // Parameters
 float m_min_distance;               float default_min_distance = 0.5;
-float m_collision_distance;      float default_collision_distance = 4.0;
-float m_quad_width;                 float default_quad_width = 0.8;
+float m_collision_distance;         float default_collision_distance = 4.0;
+float m_quad_width;                 float default_quad_width = 1.2;
 float m_quad_height;                float default_quad_height = 0.4;
-float m_ground_minimum;     float default_ground_minimum = 0.5;
-bool m_filter_ground;               bool default_filter_ground = true;
+float m_ground_minimum;             float default_ground_minimum = 0.5;
+bool m_filter_ground;               bool default_filter_ground = false;
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZ> input1_pcl, input2_pcl, input3_pcl;
 pcl::PointCloud<pcl::PointXYZRGB> filtered_pcl, output_pcl, output1_pcl, output2_pcl, output3_pcl;
-octomap::OcTree *octmap;
+octomap::OcTree octmap = octomap::OcTree(resolution);
 
 fcl::CollisionObject * collision_box;
 fcl::CollisionObject * collision_tree;
@@ -290,44 +290,44 @@ void detect_object () {
 bool detect_collision (float degree_theta)
 {
   bool willCollide = false;
-  float theta = (M_PI / 180) * -degree_theta;
-  //fcl::Matrix3f rotation_mat = fcl::Matrix3f(1, 0, 0, 0, cos(theta), -sin(theta), 0, sin(theta), cos(theta)); // X rotation
-  //fcl::Matrix3f rotation_mat = fcl::Matrix3f(cos(theta), 0, sin(theta), 0, 1, 0, -sin(theta), 0, cos(theta)); // Y rotation
-  fcl::Matrix3f rotation_mat = fcl::Matrix3f(cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0, 0, 0, 1); // Z rotation
+//  float theta = (M_PI / 180) * -degree_theta;
+//  //fcl::Matrix3f rotation_mat = fcl::Matrix3f(1, 0, 0, 0, cos(theta), -sin(theta), 0, sin(theta), cos(theta)); // X rotation
+//  //fcl::Matrix3f rotation_mat = fcl::Matrix3f(cos(theta), 0, sin(theta), 0, 1, 0, -sin(theta), 0, cos(theta)); // Y rotation
+//  fcl::Matrix3f rotation_mat = fcl::Matrix3f(cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0, 0, 0, 1); // Z rotation
 
-  fcl::Vec3f size = fcl::Vec3f(m_collision_distance, m_quad_width, m_quad_height);
-  fcl::Box *box = new fcl::Box(size[0], size[1], size[2]);
-  box->cost_density = 100;
-  box->threshold_occupied = 5;
+//  fcl::Vec3f size = fcl::Vec3f(m_collision_distance, m_quad_width, m_quad_height);
+//  fcl::Box *box = new fcl::Box(size[0], size[1], size[2]);
+//  box->cost_density = 100;
+//  box->threshold_occupied = 5;
 
-//  fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octmap));
-  fcl::OcTree* tree = new fcl::OcTree(std::shared_ptr<const octomap::OcTree>(octmap));
+////  fcl::OcTree* tree = new fcl::OcTree(boost::shared_ptr<const octomap::OcTree>(octmap));
+//  fcl::OcTree* tree = new fcl::OcTree(std::shared_ptr<const octomap::OcTree>(octmap));
 
-  fcl::Vec3f box_center = fcl::Vec3f(m_collision_distance / 2 + m_min_distance, 0, 0);
-  fcl::Vec3f translation_vec = fcl::Vec3f((box_center[0] * cos(theta) - box_center[1] * sin(theta)), (box_center[1] * cos(theta) + box_center[0] * sin(theta)), box_center[2]);
-  fcl::Transform3f transformation = fcl::Transform3f(rotation_mat, translation_vec);
-  collision_box = new fcl::CollisionObject(std::shared_ptr<fcl::CollisionGeometry>(box), transformation);
-  collision_tree = new fcl::CollisionObject(std::shared_ptr<fcl::CollisionGeometry>(tree), fcl::Transform3f());
+//  fcl::Vec3f box_center = fcl::Vec3f(m_collision_distance / 2 + m_min_distance, 0, 0);
+//  fcl::Vec3f translation_vec = fcl::Vec3f((box_center[0] * cos(theta) - box_center[1] * sin(theta)), (box_center[1] * cos(theta) + box_center[0] * sin(theta)), box_center[2]);
+//  fcl::Transform3f transformation = fcl::Transform3f(rotation_mat, translation_vec);
+//  collision_box = new fcl::CollisionObject(std::shared_ptr<fcl::CollisionGeometry>(box), transformation);
+//  collision_tree = new fcl::CollisionObject(std::shared_ptr<fcl::CollisionGeometry>(tree), fcl::Transform3f());
 
-  fcl::CollisionRequest request;
-  fcl::CollisionResult result;
+//  fcl::CollisionRequest request;
+//  fcl::CollisionResult result;
 
-  fcl::collide(collision_box, collision_tree, request, result);
+//  fcl::collide(collision_box, collision_tree, request, result);
 
-  fcl::AABB b = collision_box -> getAABB();
-  fcl::Vec3f vec = b.center();
+//  fcl::AABB b = collision_box -> getAABB();
+//  fcl::Vec3f vec = b.center();
 
-  if (result.isCollision() == true)
-  {
-      drawCube(vec, 2, size, rotation_mat);
-  } else {
-      drawCube(vec, 3, size, rotation_mat);
-  }
+//  if (result.isCollision() == true)
+//  {
+//      drawCube(vec, 2, size, rotation_mat);
+//  } else {
+//      drawCube(vec, 3, size, rotation_mat);
+//  }
 
-  if (result.numContacts() > 0)
-  {
-      willCollide = true;
-  }
+//  if (result.numContacts() > 0)
+//  {
+//      willCollide = true;
+//  }
   return willCollide;
 }
 
@@ -345,7 +345,6 @@ void avoid_collision ()
   std_msgs::Float64 detect_time;
   detect_time.data = (ros::Time::now() - start_detect_time).toSec() * 1000;
   detect_time_pub.publish(detect_time);
-
   if (willCollide)
   {
       draw_new_direction(0, 0.5, true);
@@ -360,10 +359,10 @@ void avoid_collision ()
         else
         {
           //std::cout << "No collision" << std::endl;
-          draw_new_direction(-degree, 4.0, false);
+          draw_new_direction(-degree - value_to_add, 4.0, false);
           willCollide = false;
 
-          pub_safecopter_data(true, true, -degree);
+          pub_safecopter_data(true, true, -degree - value_to_add);
           break;
         }
 
@@ -375,10 +374,10 @@ void avoid_collision ()
         else
         {
           //std::cout << "No collision" << std::endl;
-          draw_new_direction(degree, 4.0, false);
+          draw_new_direction(degree + value_to_add, 4.0, false);
           willCollide = false;
 
-          pub_safecopter_data(true, true, degree);
+          pub_safecopter_data(true, true, degree + value_to_add);
           break;
         }
       }
@@ -531,22 +530,29 @@ void pcl_combine ()
       filter_ground();
   }
 
+  tf::StampedTransform transform;
+  try
+  {
+          tf_listener->lookupTransform("odom", "base_link", ros::Time(0), transform);
+  }
+  catch (tf::TransformException ex)
+  {
+          ROS_ERROR("%s", ex.what());
+  }
+
+  pcl_ros::transformPointCloud (output_pcl, output_pcl, transform);
+
 //  octomap::OcTree tree = octomap::OcTree(0.05);
 //  octmap = &tree;
 
   ros::Time start_convert_time = ros::Time::now();
-  octmap = new octomap::OcTree(0.05);
-  octmap->setProbHit(0.9);
-  octmap->setProbMiss(0.1);
-  octmap->setClampingThresMin(0.49);
-  octmap->setClampingThresMax(0.51);
   octomap::KeySet occupied_cells;
 
   for(pcl::PointCloud<pcl::PointXYZRGB>::const_iterator it = output_pcl.begin(); it != output_pcl.end(); it++)
   {
       octomap::point3d point(it->x, it->y, it->z);
       octomap::OcTreeKey key;
-      if (octmap->coordToKeyChecked(point, key))
+      if (octmap.coordToKeyChecked(point, key))
       {
           occupied_cells.insert(key);
       }
@@ -554,15 +560,17 @@ void pcl_combine ()
 
   for (octomap::KeySet::iterator it = occupied_cells.begin(), end = occupied_cells.end(); it != end; it++)
   {
-      octmap->updateNode(*it, true);
+      octmap.updateNode(*it, true);
   }
+
   std_msgs::Float64 convert_time;
   convert_time.data = (ros::Time::now() - start_convert_time).toSec() * 1000;
   convert_time_pub.publish(convert_time);
+  std::cout << "Convert time: " << convert_time.data << std::endl;
 
-  colorize();
+//  colorize();
 
-  avoid_collision();
+//  avoid_collision();
 
   //detect_object();
 
@@ -572,7 +580,7 @@ void pcl_combine ()
       octomap_msgs::Octomap map;
       map.header.frame_id = base_link_id;
       map.header.stamp = ros::Time::now();
-      if (octomap_msgs::binaryMapToMsg(*octmap, map))
+      if (octomap_msgs::binaryMapToMsg(octmap, map))
       {
           binary_map_pub.publish(map);
       }
@@ -582,22 +590,22 @@ void pcl_combine ()
       }
   }
 
-  pcl::toROSMsg(output_pcl, output);
+//  pcl::toROSMsg(output_pcl, output);
 
-  pub.publish(output);
+//  pub.publish(output);
   
-  std_msgs::Float64 total_time;
-  total_time.data = (ros::Time::now() - start_total_time).toSec() * 1000;
-  total_time_pub.publish(total_time);
+//  std_msgs::Float64 total_time;
+//  total_time.data = (ros::Time::now() - start_total_time).toSec() * 1000;
+//  total_time_pub.publish(total_time);
 
-  delete octmap;
+//  delete octmap;
 }
 
 void cloud_cb_cam1 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam1_data_valid)
   {
-//    std::cout << "Cam 1; ";
+//    std::cout << "Cam 1; " << endl;
     cam1_data_valid = true;
     
     pcl::fromROSMsg(*input, input1_pcl);
@@ -626,7 +634,7 @@ void cloud_cb_cam2 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam2_data_valid)
   {
-//    std::cout << "Cam 2; ";
+//    std::cout << "Cam 2; " << endl;
     cam2_data_valid = true;
 
     pcl::fromROSMsg(*input, input2_pcl);
@@ -655,7 +663,7 @@ void cloud_cb_cam3 (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   if (!cam3_data_valid)
   {
-//    std::cout << "Cam 3; ";
+//    std::cout << "Cam 3; " << endl;
     cam3_data_valid = true;
 
     pcl::fromROSMsg(*input, input3_pcl);
@@ -685,6 +693,12 @@ int main (int argc, char** argv)
   // Initialize ROS
   ros::init (argc, argv, "safecopter");
   ros::NodeHandle nh ("safecopter");
+
+  // Initialize tree
+  octmap.setProbHit(0.9);
+  octmap.setProbMiss(0.1);
+  octmap.setClampingThresMin(0.49);
+  octmap.setClampingThresMax(0.51);
 
   // Define parameters
   nh.param("min_distance", m_min_distance, default_min_distance);
@@ -727,7 +741,7 @@ int main (int argc, char** argv)
   {
     ROS_INFO("Publishing non-latched (topics are only prepared as needed, will only be re-published on map change");
   }
-  binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 1, m_latchedTopics);
+  binary_map_pub = nh.advertise<octomap_msgs::Octomap>("octomap_binary", 5, m_latchedTopics);
 
   // Spin
   ros::spin ();

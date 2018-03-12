@@ -9,7 +9,7 @@ Panels:
         - /OccupancyGrid1
         - /MarkerArray1
       Splitter Ratio: 0.5
-    Tree Height: 747
+    Tree Height: 359
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -186,5 +186,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 928
-  X: 1985
+  X: 65
   Y: 24

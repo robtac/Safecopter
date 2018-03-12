@@ -111,7 +111,7 @@ class MavrosOffboardPosctlTest():
         t.transform.rotation.y = self.local_position.pose.orientation.y
         t.transform.rotation.z = self.local_position.pose.orientation.z
 
-        br.sendTransform(t)
+        # br.sendTransform(t)
 
     def pub_target_location(self, x, y):
         marker = Marker()
@@ -186,7 +186,7 @@ class MavrosOffboardPosctlTest():
         while not self.has_global_pos:
             self.rate.sleep()
 
-        positions = (9, 0, self.height)
+        positions = (0, 0, self.height)
         print(positions)
 
         for i in range(0, len(positions)):

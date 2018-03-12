@@ -139,12 +139,14 @@ include_directories(${FCL_INCLUDE_DIRS})
 
 ## Declare a C++ executable
 add_executable(safecopter src/safecopter.cpp)
+add_executable(safecopter_mapping src/safecopter_mapping.cpp)
 add_executable(pc_combine src/pc_combine.cpp)
 add_executable(markers src/markers.cpp)
 add_executable(state_publisher src/state_publisher.cpp)
 add_executable(offb_node src/offb_node.cpp)
 add_executable(pub_setpoints src/pub_setpoints.cpp)
 add_executable(simple_example src/simple_example.cpp)
+add_executable(odom_publisher src/odom_publisher.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -162,9 +164,17 @@ target_link_libraries(safecopter
 ##  ${fcl_LIBRARIES}
   fcl
 )
+target_link_libraries(safecopter_mapping
+  ${OCTOMAP_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+##  ${fcl_LIBRARIES}
+  fcl
+)
 
 link_libraries(${OCTOMAP_LIBRARIES})
 
+target_link_libraries(odom_publisher ${catkin_LIBRARIES})
 target_link_libraries(state_publisher ${catkin_LIBRARIES})
 target_link_libraries(markers ${catkin_LIBRARIES})
 target_link_libraries(offb_node ${catkin_LIBRARIES})

@@ -140,7 +140,7 @@ class MavrosOffboardPosctlTest():
         t.transform.rotation.y = self.local_position.pose.orientation.y
         t.transform.rotation.z = self.local_position.pose.orientation.z
 
-        br.sendTransform(t)
+        # br.sendTransform(t)
 
     def pub_target_marker(self, x, y):
         marker = Marker()
